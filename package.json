@@ -1,0 +1,16 @@
+{
+  "name": "com.agava.adsappview",
+  "version": "1.0.0",
+  "displayName": "Ads App`s viewer",
+  "type": "library",
+  "unity": "2022.3",
+  "description": "View ads app on device",
+  "license": "MIT",
+  "dependencies": {
+    "com.google.external-dependency-manager": "1.2.177",
+    "io.appmetrica.analytics": "6.1.0",
+    "com.unity.nuget.newtonsoft-json": "3.0.2",
+    "com.unity.textmeshpro": "3.0.9"
+  },
+  "author": "github.com/doCent90"
+}
