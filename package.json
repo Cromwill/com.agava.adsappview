@@ -1,16 +1,23 @@
 {
-  "name": "com.agava.adsappview",
-  "version": "1.0.0",
-  "displayName": "Ads App`s viewer",
-  "type": "library",
-  "unity": "2022.3",
-  "description": "View ads app on device",
-  "license": "MIT",
-  "dependencies": {
-    "com.google.external-dependency-manager": "1.2.177",
-    "io.appmetrica.analytics": "6.1.0",
-    "com.unity.nuget.newtonsoft-json": "3.0.2",
-    "com.unity.textmeshpro": "3.0.9"
-  },
-  "author": "github.com/doCent90"
+    "author": "github.com/doCent90",
+    "dependencies": {
+        "com.google.external-dependency-manager": "1.2.177",
+        "com.unity.nuget.newtonsoft-json": "3.0.2",
+        "com.unity.textmeshpro": "3.0.9",
+        "io.appmetrica.analytics": "6.1.0"
+    },
+    "description": "View ads app on device",
+    "displayName": "Ads App`s viewer",
+    "license": "MIT",
+    "name": "com.agava.adsappview",
+    "samples": [
+        {
+            "description": "Contains prefabs",
+            "displayName": "Prefabs",
+            "path": "Samples~/Prefabs"
+        }
+    ],
+    "type": "library",
+    "unity": "2022.3",
+    "version": "1.0.0"
 }
