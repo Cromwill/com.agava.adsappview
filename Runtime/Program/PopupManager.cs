@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.Networking;
 using AdsAppView.DTO;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace AdsAppView.Utility
 {
@@ -23,6 +24,7 @@ namespace AdsAppView.Utility
         private const string FilePathRCName = "file-path";
         private const string FtpCredsRCName = "ftp-creds";
         private const string CarouselPicture = "picrure";
+        private const string Caching = "caching";
 
         [Header("Web settings")]
         [Tooltip("Bund for plugin settings")]
@@ -41,13 +43,19 @@ namespace AdsAppView.Utility
         private AdsFilePathsData _adsFilePathsData;
         private PreloadService _preloadService;
 
-        [SerializeField] private List<SpriteData> _sprites;
+        [SerializeField, HideInInspector] private List<SpriteData> _sprites;
         private SpriteData _sprite;
 
         private float _firstTimerSec = 60f;
         private float _regularTimerSec = 180f;
+        private bool _caching = true;
 
         public string AppId => Application.identifier;
+
+        private void Awake()
+        {
+            DontDestroyOnLoad(gameObject);
+        }
 
         private IEnumerator Start()
         {
@@ -79,6 +87,8 @@ namespace AdsAppView.Utility
 
                 if (data != null)
                 {
+                    await SetCachingConfig();
+
                     _settingsData = data;
                     _firstTimerSec = data.first_timer;
                     _regularTimerSec = data.regular_timer;
@@ -105,15 +115,21 @@ namespace AdsAppView.Utility
         private IEnumerator ShowingAds()
         {
             yield return new WaitForSecondsRealtime(_firstTimerSec);
+
             _viewPresenter.Show(_sprite);
+            yield return new WaitWhile(() => _viewPresenter.Enabled);
 
             if (_settingsData.carousel)
             {
                 int index = 0;
+
                 while (true)
                 {
                     yield return new WaitForSecondsRealtime(_regularTimerSec);
+
                     _viewPresenter.Show(_sprites[index]);
+                    yield return new WaitWhile(() => _viewPresenter.Enabled);
+
                     index++;
 
                     if (index >= _sprites.Count)
@@ -135,22 +151,16 @@ namespace AdsAppView.Utility
             for (int i = 0; i < _settingsData.carousel_count; i++)
             {
                 SpriteData newSprite = await GetSprite(index: i);
+                newSprite ??= _sprite;
 
-                if (newSprite != null)
-                    _sprites.Add(newSprite);
-                else
-                    _sprites.Add(_sprite);
+                _sprites.Add(newSprite);
             }
         }
 
         private async Task<SpriteData> GetSprite(int index = -1)
         {
-            AppData newData;
-
-            if (index == -1)
-                newData = new AppData() { app_id = _settingsData.ads_app_id, store_id = _storeName, platform = Platform };
-            else
-                newData = new AppData() { app_id = CarouselPicture + index, store_id = _storeName, platform = Platform };
+            string appId = index == -1 ? _settingsData.ads_app_id : CarouselPicture + index;
+            AppData newData = new AppData() { app_id = appId, store_id = _storeName, platform = Platform };
 
             Response filePathResponse = await _api.GetRemoteConfig(ControllerName, FilePathRCName, newData);
 
@@ -168,21 +178,33 @@ namespace AdsAppView.Utility
                     FtpCreds creds = JsonConvert.DeserializeObject<FtpCreds>(ftpCredentialResponse.body);
 
                     if (creds == null)
+                    {
                         Debug.LogError("Fail get creds data");
-
-                    Response textureResponse = _api.GetTextureData(creds.host, _adsFilePathsData.file_path, creds.login, creds.password);
-
-                    if (textureResponse.statusCode == UnityWebRequest.Result.Success)
-                    {
-                        Texture2D texture = textureResponse.texture;
-                        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-                        return new SpriteData() { sprite = sprite, link = _adsFilePathsData.app_link, name = _adsFilePathsData.file_path };
-                    }
-                    else
-                    {
-                        Debug.LogError("Fail to download texture: " + textureResponse.statusCode);
                         return null;
                     }
+
+                    string cacheTexturePath = ConstructCacheTexturePath(_adsFilePathsData);
+
+                    if ((_caching && TryLoadCacheTexture(cacheTexturePath, out Texture2D texture)) == false)
+                    {
+                        Response textureResponse = _api.GetTextureData(creds.host, _adsFilePathsData.file_path, creds.login, creds.password);
+
+                        if (textureResponse.statusCode == UnityWebRequest.Result.Success)
+                        {
+                            texture = textureResponse.texture;
+
+                            if (_caching)
+                                TrySaveCacheTexture(cacheTexturePath, texture);
+                        }
+                        else
+                        {
+                            Debug.LogError("Fail to download texture: " + textureResponse.statusCode);
+                            return null;
+                        }
+                    }
+
+                    Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                    return new SpriteData() { sprite = sprite, link = _adsFilePathsData.app_link, name = _adsFilePathsData.file_path, aspectRatio = (float)texture.width / texture.height };
                 }
                 else
                 {
@@ -196,18 +218,80 @@ namespace AdsAppView.Utility
                 return null;
             }
         }
+
+        private async Task SetCachingConfig()
+        {
+            Response cachingResponse = await _api.GetRemoteConfig(Caching);
+
+            if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
+            {
+                string body = cachingResponse.body;
+
+                if (bool.TryParse(body, out bool caching))
+                    _caching = caching;
+            }
+        }
+
+        private string ConstructCacheTexturePath(AdsFilePathsData adsFilePathsData)
+        {
+            string extension = Path.GetExtension(adsFilePathsData.file_path);
+            return Path.Combine(Application.persistentDataPath, adsFilePathsData.ads_app_id + extension);
+        }
+
+        private bool TryLoadCacheTexture(string cacheFilePath, out Texture2D texture)
+        {
+            texture = null;
+
+            if (File.Exists(cacheFilePath))
+            {
+                byte[] rawData = File.ReadAllBytes(cacheFilePath);
+                texture = new Texture2D(2, 2);
+                texture.LoadImage(rawData);
+
+#if UNITY_EDITOR
+                Debug.Log($"Cache texture loaded from path: {cacheFilePath}");
+#endif
+            }
+
+            return texture != null;
+        }
+
+        private void TrySaveCacheTexture(string cacheFilePath, Texture2D texture)
+        {
+            try
+            {
+                File.WriteAllBytes(cacheFilePath, texture.EncodeToPNG());
+
+#if UNITY_EDITOR
+                Debug.Log($"Cache texture saved to path: {cacheFilePath}");
+#endif
+            }
+            catch (IOException exception)
+            {
+#if UNITY_EDITOR
+                Debug.LogError("Fail to save cache texture: " + exception.Message);
+#endif
+            }
+        }
     }
 
     public partial class PopupManager : MonoBehaviour
     {
         #region TEST
 #if UNITY_EDITOR
+        [Header("Test"), Tooltip("Can be null")]
         [SerializeField] private Button _testGetTextureBtn;
 
-        private void Awake()
+        private void OnEnable()
         {
             if (_testGetTextureBtn != null)
                 _testGetTextureBtn.onClick.AddListener(GetTexture);
+        }
+
+        private void OnDisable()
+        {
+            if (_testGetTextureBtn != null)
+                _testGetTextureBtn.onClick.RemoveListener(GetTexture);
         }
 
         private async void GetTexture()

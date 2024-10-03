@@ -18,8 +18,6 @@ namespace AdsAppView.Utility
         private const string AppJson = "application/json";
         private const string ContentType = "Content-Type";
         private const int TimeOut = 59;
-        private const int Width = 1920;
-        private const int Heigth = 1080;
 
         private readonly string _serverPath;
 
@@ -147,10 +145,11 @@ namespace AdsAppView.Utility
 
                     fileStream.Write(buffer, 0, bytesRead);
                 }
+
                 fileStream.Close();
             }
 
-            Texture2D texture = new Texture2D(Width, Heigth);
+            Texture2D texture = new Texture2D(2, 2);
             texture.LoadImage(downloaded);
 
             UnityWebRequest.Result result = texture != null ? UnityWebRequest.Result.Success : UnityWebRequest.Result.DataProcessingError;

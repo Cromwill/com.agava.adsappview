@@ -10,5 +10,6 @@ namespace AdsAppView.DTO
         public Sprite sprite;
         public string link;
         public string name;
+        public float aspectRatio;
     }
 }
