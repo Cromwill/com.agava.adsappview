@@ -15,6 +15,11 @@
             "description": "Contains prefabs",
             "displayName": "Prefabs",
             "path": "Samples~/Prefabs"
+        },
+        {
+            "description": "Contains art",
+            "displayName": "Art",
+            "path": "Samples~/Art"
         }
     ],
     "type": "library",
