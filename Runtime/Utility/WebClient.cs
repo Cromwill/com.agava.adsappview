@@ -45,6 +45,22 @@ namespace AdsAppView.Utility
         {
             string path = $"{GetHttpPath(request.api_name)}";
 
+            using (UnityWebRequest webRequest = CreateWebRequest(path, RequestType.GET, uploadBody: request.body))
+            {
+                webRequest.SendWebRequest();
+
+                await WaitProccessing(webRequest);
+                TryShowRequestInfo(webRequest, request.api_name);
+
+                var body = webRequest.downloadHandler.text;
+                return new Response(webRequest.result, webRequest.result.ToString(), body, false, null);
+            }
+        }
+
+        public async Task<Response> GetAppSettings(Request request)
+        {
+            string path = $"{GetHttpPath(request.api_name)}";
+
             using (UnityWebRequest webRequest = CreateWebRequest(path, RequestType.POST, uploadBody: request.body))
             {
                 webRequest.SendWebRequest();

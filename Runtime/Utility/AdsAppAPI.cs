@@ -66,6 +66,19 @@ namespace AdsAppView.Utility
             return await _webClient.GetRemote(request);
         }
 
+        public async Task<Response> GetAppSettings(string controllerName, string apiName, AppData data)
+        {
+            EnsureInitialize();
+
+            var request = new Request()
+            {
+                api_name = controllerName + "/" + apiName,
+                body = JsonConvert.SerializeObject(data),
+            };
+
+            return await _webClient.GetAppSettings(request);
+        }
+
         /// <summary>
         /// Send ftp request to get data
         /// </summary>

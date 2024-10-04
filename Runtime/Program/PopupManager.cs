@@ -80,7 +80,7 @@ namespace AdsAppView.Program
 
         private async void StartView()
         {
-            Response appSettingsResponse = await _api.GetRemoteConfig(ControllerName, SettingsRCName, _appData);
+            Response appSettingsResponse = await _api.GetAppSettings(ControllerName, SettingsRCName, _appData);
 
             if (appSettingsResponse.statusCode == UnityWebRequest.Result.Success)
             {
