@@ -1,8 +1,9 @@
-﻿using UnityEngine.Scripting;
+﻿using System;
+using UnityEngine.Scripting;
 
 namespace AdsAppView.DTO
 {
-    [Preserve]
+    [Preserve, Serializable]
     public class AppSettingsData
     {
         public string app_id {  get; set; }

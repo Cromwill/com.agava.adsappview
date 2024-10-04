@@ -1,8 +1,9 @@
-﻿using UnityEngine.Scripting;
+﻿using System;
+using UnityEngine.Scripting;
 
 namespace AdsAppView.DTO
 {
-    [Preserve]
+    [Preserve, Serializable]
     public class Request
     {
         public string api_name { get; set; }

@@ -1,8 +1,9 @@
-﻿using UnityEngine.Scripting;
+﻿using System;
+using UnityEngine.Scripting;
 
 namespace AdsAppView.DTO
 {
-    [Preserve]
+    [Preserve, Serializable]
     public class AdsFilePathsData
     {
         public string ads_app_id { get; set; }

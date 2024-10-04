@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Scripting;
 using static UnityEngine.Networking.UnityWebRequest;
 
 namespace AdsAppView.DTO
 {
-    [Preserve]
+    [Preserve, Serializable]
     public class Response
     {
         public Response(Result statusCode, string reasonPhrase, string body, bool isBase64Encoded, Texture2D texture)

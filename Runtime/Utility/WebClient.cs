@@ -45,7 +45,7 @@ namespace AdsAppView.Utility
         {
             string path = $"{GetHttpPath(request.api_name)}";
 
-            using (UnityWebRequest webRequest = CreateWebRequest(path, RequestType.GET, uploadBody: request.body))
+            using (UnityWebRequest webRequest = CreateWebRequest(path, RequestType.POST, uploadBody: request.body))
             {
                 webRequest.SendWebRequest();
 
