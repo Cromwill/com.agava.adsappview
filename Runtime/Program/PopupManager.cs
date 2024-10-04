@@ -7,8 +7,9 @@ using UnityEngine.Networking;
 using AdsAppView.DTO;
 using Newtonsoft.Json;
 using System.IO;
+using AdsAppView.Utility;
 
-namespace AdsAppView.Utility
+namespace AdsAppView.Program
 {
     public partial class PopupManager : MonoBehaviour
     {
@@ -117,7 +118,7 @@ namespace AdsAppView.Utility
             yield return new WaitForSecondsRealtime(_firstTimerSec);
 
             _viewPresenter.Show(_sprite);
-            yield return new WaitWhile(() => _viewPresenter.Enabled);
+            yield return new WaitWhile(() => _viewPresenter.Enable);
 
             if (_settingsData.carousel)
             {
@@ -128,7 +129,7 @@ namespace AdsAppView.Utility
                     yield return new WaitForSecondsRealtime(_regularTimerSec);
 
                     _viewPresenter.Show(_sprites[index]);
-                    yield return new WaitWhile(() => _viewPresenter.Enabled);
+                    yield return new WaitWhile(() => _viewPresenter.Enable);
 
                     index++;
 

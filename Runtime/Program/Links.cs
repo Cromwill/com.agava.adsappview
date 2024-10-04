@@ -2,8 +2,9 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
+using AdsAppView.Utility;
 
-namespace AdsAppView.Utility
+namespace AdsAppView.Program
 {
     public class Links : MonoBehaviour
     {

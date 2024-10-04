@@ -3,7 +3,7 @@ using AdsAppView.DTO;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace AdsAppView.Utility
+namespace AdsAppView.Program
 {
     public class ViewPresenter : MonoBehaviour
     {
@@ -16,7 +16,10 @@ namespace AdsAppView.Utility
         private Links _links;
         private string _link;
 
-        public bool Enabled { get; private set; } = false;
+        public bool Enable { get; private set; } = false;
+
+        public Action Enabled;
+        public Action Disabled;
 
         public void Construct(Links links)
         {
@@ -53,7 +56,8 @@ namespace AdsAppView.Utility
             canvas.alpha = 1;
             canvas.interactable = true;
             canvas.blocksRaycasts = true;
-            Enabled = true;
+            Enable = true;
+            Enabled?.Invoke();
         }
 
         private void DisableCanvasGroup(CanvasGroup canvas)
@@ -61,7 +65,8 @@ namespace AdsAppView.Utility
             canvas.alpha = 0;
             canvas.interactable = false;
             canvas.blocksRaycasts = false;
-            Enabled = false;
+            Enable = false;
+            Disabled?.Invoke();
         }
     }
 }
