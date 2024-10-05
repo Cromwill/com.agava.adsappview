@@ -163,7 +163,7 @@ namespace AdsAppView.Program
             string appId = index == -1 ? _settingsData.ads_app_id : CarouselPicture + index;
             AppData newData = new AppData() { app_id = appId, store_id = _storeName, platform = Platform };
 
-            Response filePathResponse = await _api.GetRemoteConfig(ControllerName, FilePathRCName, newData);
+            Response filePathResponse = await _api.GetFilePath(ControllerName, FilePathRCName, newData);
 
             if (filePathResponse.statusCode == UnityWebRequest.Result.Success)
             {
