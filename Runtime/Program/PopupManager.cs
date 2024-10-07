@@ -20,12 +20,14 @@ namespace AdsAppView.Program
 #elif UNITY_IOS
         private const string Platform = "ios";
 #endif
+
         private const string ControllerName = "AdsApp";
         private const string SettingsRCName = "app-settings";
         private const string FilePathRCName = "file-path";
         private const string FtpCredsRCName = "ftp-creds";
         private const string CarouselPicture = "picrure";
         private const string Caching = "caching";
+        private const string ClosingDelay = "closing-delay";
 
         [Header("Web settings")]
         [Tooltip("Bund for plugin settings")]
@@ -49,7 +51,8 @@ namespace AdsAppView.Program
 
         private float _firstTimerSec = 60f;
         private float _regularTimerSec = 180f;
-        private bool _caching = true;
+        private float _closingDelay = 2;
+        private bool _caching = false;
 
         public string AppId => Application.identifier;
 
@@ -67,7 +70,6 @@ namespace AdsAppView.Program
             Debug.Log(JsonConvert.SerializeObject(_appData));
             _api = new(_serverPath, AppId);
             _preloadService = new(_api, _bundlIdVersion);
-            _viewPresenter.Construct(_links);
 
             yield return _preloadService.Preparing();
             yield return _links.Initialize(_api);
@@ -89,6 +91,9 @@ namespace AdsAppView.Program
                 if (data != null)
                 {
                     await SetCachingConfig();
+                    await SetClosingDelayConfig();
+
+                    _viewPresenter.Initialize(_closingDelay);
 
                     _settingsData = data;
                     _firstTimerSec = data.first_timer;
@@ -142,7 +147,9 @@ namespace AdsAppView.Program
                 while (true)
                 {
                     yield return new WaitForSecondsRealtime(_regularTimerSec);
+
                     _viewPresenter.Show(_sprite);
+                    yield return new WaitWhile(() => _viewPresenter.Enable);
                 }
             }
         }
@@ -229,9 +236,35 @@ namespace AdsAppView.Program
                 string body = cachingResponse.body;
 
                 if (bool.TryParse(body, out bool caching))
+                {
                     _caching = caching;
+
+#if UNITY_EDITOR
+                    Debug.Log("Caching set to: " + _caching);
+#endif
+                }
             }
         }
+
+        private async Task SetClosingDelayConfig()
+        {
+            Response cachingResponse = await _api.GetRemoteConfig(ClosingDelay);
+
+            if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
+            {
+                string body = cachingResponse.body;
+
+                if (float.TryParse(body, out float closingDelay))
+                {
+                    _closingDelay = closingDelay;
+
+#if UNITY_EDITOR
+                    Debug.Log("Closing delay set to: " + _closingDelay);
+#endif
+                }
+            }
+        }
+
 
         private string ConstructCacheTexturePath(AdsFilePathsData adsFilePathsData)
         {

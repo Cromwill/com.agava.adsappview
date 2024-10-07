@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using AdsAppView.DTO;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,20 +14,36 @@ namespace AdsAppView.Program
         [SerializeField] private AspectRatioFitter _aspectRatioFitter;
         [SerializeField] private Button _closeBtn;
 
-        private Links _links;
+        private float _closingDelay = 0;
         private string _link;
+
+        private Coroutine _coroutine;
 
         public bool Enable { get; private set; } = false;
 
         public Action Enabled;
         public Action Disabled;
 
-        public void Construct(Links links)
+        private void Awake()
         {
-            _links = links;
+            DisableCanvasGroup(_windowCanvasGrp);
+        }
+
+        private void OnEnable()
+        {
             _linkBtn.onClick.AddListener(OnLinkClicked);
             _closeBtn.onClick.AddListener(OnCloseClicked);
-            DisableCanvasGroup(_windowCanvasGrp);
+        }
+
+        private void OnDisable()
+        {
+            _linkBtn.onClick.RemoveListener(OnLinkClicked);
+            _closeBtn.onClick.RemoveListener(OnCloseClicked);
+        }
+
+        public void Initialize(float closingDelay)
+        {
+            _closingDelay = closingDelay;
         }
 
         public void Show(SpriteData sprite)
@@ -58,6 +75,8 @@ namespace AdsAppView.Program
             canvas.blocksRaycasts = true;
             Enable = true;
             Enabled?.Invoke();
+            StopCoroutine();
+            _coroutine = StartCoroutine(ShowCloseButtonWithDelay(_closingDelay));
         }
 
         private void DisableCanvasGroup(CanvasGroup canvas)
@@ -67,6 +86,28 @@ namespace AdsAppView.Program
             canvas.blocksRaycasts = false;
             Enable = false;
             Disabled?.Invoke();
+            StopCoroutine();
+        }
+
+        private IEnumerator ShowCloseButtonWithDelay(float delay)
+        {
+            if (delay > 0)
+            {
+                _closeBtn.gameObject.SetActive(false);
+
+                WaitForSeconds waitForSeconds = new WaitForSeconds(delay);
+                yield return waitForSeconds;
+
+                _closeBtn.gameObject.SetActive(true);
+            }
+
+            _coroutine = null;
+        }
+
+        private void StopCoroutine()
+        {
+            if (_coroutine != null)
+                StopCoroutine(_coroutine);
         }
     }
 }
