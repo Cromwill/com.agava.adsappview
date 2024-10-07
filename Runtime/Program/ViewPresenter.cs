@@ -93,10 +93,10 @@ namespace AdsAppView.Program
             Enable = true;
             Enabled?.Invoke();
 
-            WaitForSeconds waitForFadeIn = new WaitForSeconds(_enablingTime);
+            WaitForSecondsRealtime waitForFadeIn = new WaitForSecondsRealtime(_enablingTime);
 
             StartCoroutine(FadeInImage(_background, _enablingTime));
-            yield return new WaitForSeconds(Diff);
+            yield return new WaitForSecondsRealtime(Diff);
 
             StartCoroutine(FadeInImage(_popupImage, _enablingTime));
             yield return waitForFadeIn;
@@ -106,7 +106,7 @@ namespace AdsAppView.Program
             StartCoroutine(FadeInImage(_linkButtonImage, _enablingTime));
             yield return waitForFadeIn;
 
-            yield return new WaitForSeconds(_closingDelay);
+            yield return new WaitForSecondsRealtime(_closingDelay);
             _closeButton.gameObject.SetActive(true);
         }
 
