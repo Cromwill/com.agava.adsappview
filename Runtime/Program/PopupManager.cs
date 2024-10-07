@@ -28,6 +28,7 @@ namespace AdsAppView.Program
         private const string CarouselPicture = "picrure";
         private const string Caching = "caching";
         private const string ClosingDelay = "closing-delay";
+        private const string EnablingTime = "enabling-time";
 
         [Header("Web settings")]
         [Tooltip("Bund for plugin settings")]
@@ -52,6 +53,7 @@ namespace AdsAppView.Program
         private float _firstTimerSec = 60f;
         private float _regularTimerSec = 180f;
         private float _closingDelay = 2;
+        private float _enablingTime = 2;
         private bool _caching = false;
 
         public string AppId => Application.identifier;
@@ -90,10 +92,11 @@ namespace AdsAppView.Program
 
                 if (data != null)
                 {
-                    await SetCachingConfig();
+                    await SetEnablingTimeConfig();
                     await SetClosingDelayConfig();
+                    await SetCachingConfig();
 
-                    _viewPresenter.Initialize(_closingDelay);
+                    _viewPresenter.Initialize(_enablingTime, _closingDelay);
 
                     _settingsData = data;
                     _firstTimerSec = data.first_timer;
@@ -265,6 +268,24 @@ namespace AdsAppView.Program
             }
         }
 
+        private async Task SetEnablingTimeConfig()
+        {
+            Response cachingResponse = await _api.GetRemoteConfig(EnablingTime);
+
+            if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
+            {
+                string body = cachingResponse.body;
+
+                if (float.TryParse(body, out float enablingTime))
+                {
+                    _enablingTime = enablingTime;
+
+#if UNITY_EDITOR
+                    Debug.Log("Enabling time set to: " + _enablingTime);
+#endif
+                }
+            }
+        }
 
         private string ConstructCacheTexturePath(AdsFilePathsData adsFilePathsData)
         {

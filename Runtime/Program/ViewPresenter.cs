@@ -8,16 +8,22 @@ namespace AdsAppView.Program
 {
     public class ViewPresenter : MonoBehaviour
     {
+        private const float Diff = 0.5f;
+
         [SerializeField] private CanvasGroup _windowCanvasGrp;
-        [SerializeField] private Image _image;
-        [SerializeField] private Button _linkBtn;
+        [SerializeField] private Button _linkButton;
+        [SerializeField] private Button _closeButton;
         [SerializeField] private AspectRatioFitter _aspectRatioFitter;
-        [SerializeField] private Button _closeBtn;
+        [SerializeField] private Image _popupImage;
+        [SerializeField] private Image _background;
+
+        private Image _linkButtonImage;
 
         private float _closingDelay = 0;
+        private float _enablingTime = 10;
         private string _link;
 
-        private Coroutine _coroutine;
+        private Coroutine _enablingCoroutine;
 
         public bool Enable { get; private set; } = false;
 
@@ -27,31 +33,35 @@ namespace AdsAppView.Program
         private void Awake()
         {
             DisableCanvasGroup(_windowCanvasGrp);
+            _linkButtonImage = _linkButton.GetComponent<Image>();
         }
 
         private void OnEnable()
         {
-            _linkBtn.onClick.AddListener(OnLinkClicked);
-            _closeBtn.onClick.AddListener(OnCloseClicked);
+            _linkButton.onClick.AddListener(OnLinkClicked);
+            _closeButton.onClick.AddListener(OnCloseClicked);
         }
 
         private void OnDisable()
         {
-            _linkBtn.onClick.RemoveListener(OnLinkClicked);
-            _closeBtn.onClick.RemoveListener(OnCloseClicked);
+            _linkButton.onClick.RemoveListener(OnLinkClicked);
+            _closeButton.onClick.RemoveListener(OnCloseClicked);
         }
 
-        public void Initialize(float closingDelay)
+        public void Initialize(float enablingTime, float closingDelay)
         {
+            _enablingTime = enablingTime;
             _closingDelay = closingDelay;
         }
 
         public void Show(SpriteData sprite)
         {
-            _image.sprite = sprite.sprite;
+            _popupImage.sprite = sprite.sprite;
             _aspectRatioFitter.aspectRatio = sprite.aspectRatio;
             _link = sprite.link;
-            EnableCanvasGroup(_windowCanvasGrp);
+
+            Stop(_enablingCoroutine);
+            _enablingCoroutine = StartCoroutine(EnableCanvasGroup(_windowCanvasGrp));
         }
 
         private void OnLinkClicked()
@@ -68,15 +78,36 @@ namespace AdsAppView.Program
 
         private void OnCloseClicked() => DisableCanvasGroup(_windowCanvasGrp);
 
-        private void EnableCanvasGroup(CanvasGroup canvas)
+        private IEnumerator EnableCanvasGroup(CanvasGroup canvas)
         {
-            canvas.alpha = 1;
+            _closeButton.gameObject.SetActive(false);
+            _linkButton.gameObject.SetActive(false);
+
+            _popupImage.enabled = false;
+            _background.enabled = false;
+            _linkButtonImage.enabled = false;
+
             canvas.interactable = true;
             canvas.blocksRaycasts = true;
+            canvas.alpha = 1;
             Enable = true;
             Enabled?.Invoke();
-            StopCoroutine();
-            _coroutine = StartCoroutine(ShowCloseButtonWithDelay(_closingDelay));
+
+            WaitForSeconds waitForFadeIn = new WaitForSeconds(_enablingTime);
+
+            StartCoroutine(FadeInImage(_background, _enablingTime));
+            yield return new WaitForSeconds(Diff);
+
+            StartCoroutine(FadeInImage(_popupImage, _enablingTime));
+            yield return waitForFadeIn;
+
+            _linkButton.gameObject.SetActive(true);
+
+            StartCoroutine(FadeInImage(_linkButtonImage, _enablingTime));
+            yield return waitForFadeIn;
+
+            yield return new WaitForSeconds(_closingDelay);
+            _closeButton.gameObject.SetActive(true);
         }
 
         private void DisableCanvasGroup(CanvasGroup canvas)
@@ -86,28 +117,38 @@ namespace AdsAppView.Program
             canvas.blocksRaycasts = false;
             Enable = false;
             Disabled?.Invoke();
-            StopCoroutine();
+            Stop(_enablingCoroutine);
         }
 
-        private IEnumerator ShowCloseButtonWithDelay(float delay)
+        private IEnumerator FadeInImage(Image image, float time)
         {
-            if (delay > 0)
+            image.enabled = true;
+
+            image.gameObject.SetActive(true);
+            Color color = image.color;
+
+            if (time > 0)
             {
-                _closeBtn.gameObject.SetActive(false);
+                color.a = 0;
+                float elapsedTime = 0;
 
-                WaitForSeconds waitForSeconds = new WaitForSeconds(delay);
-                yield return waitForSeconds;
-
-                _closeBtn.gameObject.SetActive(true);
+                while (elapsedTime < _enablingTime)
+                {
+                    color.a = Mathf.Lerp(0, 1, elapsedTime / _enablingTime);
+                    image.color = color;
+                    elapsedTime += Time.unscaledDeltaTime;
+                    yield return new WaitForEndOfFrame();
+                }
             }
 
-            _coroutine = null;
+            color.a = 1;
+            image.color = color;
         }
 
-        private void StopCoroutine()
+        private void Stop(Coroutine coroutine)
         {
-            if (_coroutine != null)
-                StopCoroutine(_coroutine);
+            if (coroutine != null)
+                StopCoroutine(coroutine);
         }
     }
 }

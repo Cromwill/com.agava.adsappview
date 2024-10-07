@@ -184,10 +184,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _windowCanvasGrp: {fileID: 2609102815308666921}
-  _image: {fileID: 4079669028516425360}
-  _linkBtn: {fileID: 1731520110320074226}
+  _linkButton: {fileID: 1731520110320074226}
+  _closeButton: {fileID: 8333822925633433741}
   _aspectRatioFitter: {fileID: 5159727203336997823}
-  _closeBtn: {fileID: 8333822925633433741}
+  _popupImage: {fileID: 4079669028516425360}
+  _background: {fileID: 8062714559028545161}
 --- !u!1 &719074610591535890
 GameObject:
   m_ObjectHideFlags: 0
@@ -564,8 +565,8 @@ RectTransform:
   m_GameObject: {fileID: 7123831635169576241}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 478974164770539224}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
