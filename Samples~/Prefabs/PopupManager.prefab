@@ -322,7 +322,6 @@ GameObject:
   - component: {fileID: 1006557889002589154}
   - component: {fileID: 2206752988899955832}
   - component: {fileID: 523726730486349694}
-  - component: {fileID: 2543425336369137115}
   m_Layer: 5
   m_Name: PopupManager
   m_TagString: Untagged
@@ -426,25 +425,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d4dc92b658a83d4d89d580b028aca05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _bundlIdVersion: 1
-  _storeName: test
-  _serverPath: gamesrtkbd.tech
   _viewPresenter: {fileID: 7581955340151936036}
-  _links: {fileID: 2543425336369137115}
-  _sprites: []
-  _testGetTextureBtn: {fileID: 0}
---- !u!114 &2543425336369137115
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4345493700653099215}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3233bf3704bfe642b13e5f5632dfc5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &4388283684329460413
 GameObject:
   m_ObjectHideFlags: 0
@@ -513,7 +494,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 9d10a3e60b646fc4eb5efca6a25be27a, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

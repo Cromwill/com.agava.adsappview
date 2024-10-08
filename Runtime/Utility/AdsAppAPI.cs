@@ -14,6 +14,8 @@ namespace AdsAppView.Utility
 
         public bool Initialized => _webClient != null;
 
+        public static AdsAppAPI Instance;
+
         public AdsAppAPI(string serverPath, string appId)
         {
             if (string.IsNullOrEmpty(serverPath))
@@ -27,6 +29,7 @@ namespace AdsAppView.Utility
 
             _appId = appId;
             _webClient = new WebClient(serverPath);
+            Instance = this;
         }
 
         public async Task<Response> GetRemoteConfig(string remoteName)

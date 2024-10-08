@@ -1,26 +1,17 @@
-﻿using System.Collections;
+﻿using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Networking;
 using AdsAppView.DTO;
-using Newtonsoft.Json;
-using System.IO;
 using AdsAppView.Utility;
+using Newtonsoft.Json;
 
 namespace AdsAppView.Program
 {
-    public partial class PopupManager : MonoBehaviour
+    public class PopupManager : MonoBehaviour
     {
-#if UNITY_STANDALONE
-        private const string Platform = "standalone";
-#elif UNITY_ANDROID
-        private const string Platform = "android";
-#elif UNITY_IOS
-        private const string Platform = "ios";
-#endif
-
         private const string ControllerName = "AdsApp";
         private const string SettingsRCName = "app-settings";
         private const string FilePathRCName = "file-path";
@@ -30,24 +21,13 @@ namespace AdsAppView.Program
         private const string ClosingDelay = "closing-delay";
         private const string EnablingTime = "enabling-time";
 
-        [Header("Web settings")]
-        [Tooltip("Bund for plugin settings")]
-        [SerializeField] private int _bundlIdVersion = 1;
-        [Tooltip("Store name")]
-        [SerializeField] private string _storeName;
-        [Tooltip("Server name remote data")]
-        [SerializeField] private string _serverPath;
-        [Header("Components")]
         [SerializeField] private ViewPresenter _viewPresenter;
-        [SerializeField] private Links _links;
 
-        private AdsAppAPI _api;
         private AppData _appData;
         private AppSettingsData _settingsData;
         private AdsFilePathsData _adsFilePathsData;
-        private PreloadService _preloadService;
 
-        [SerializeField, HideInInspector] private List<SpriteData> _sprites;
+        private readonly List<SpriteData> _sprites = new();
         private SpriteData _sprite;
 
         private float _firstTimerSec = 60f;
@@ -56,35 +36,20 @@ namespace AdsAppView.Program
         private float _enablingTime = 2;
         private bool _caching = false;
 
-        public string AppId => Application.identifier;
-
-        private void Awake()
+        public IEnumerator Construct(AppData appData)
         {
             DontDestroyOnLoad(gameObject);
-        }
+            _appData = appData;
 
-        private IEnumerator Start()
-        {
             if (Application.internetReachability == NetworkReachability.NotReachable)
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
-            _appData = new() { app_id = AppId, store_id = _storeName, platform = Platform };
-            Debug.Log(JsonConvert.SerializeObject(_appData));
-            _api = new(_serverPath, AppId);
-            _preloadService = new(_api, _bundlIdVersion);
-
-            yield return _preloadService.Preparing();
-            yield return _links.Initialize(_api);
-
-            if (_preloadService.IsPluginAwailable)
-                StartView();
-            else
-                Debug.Log("Plugin disabled");
+            StartView();
         }
 
         private async void StartView()
         {
-            Response appSettingsResponse = await _api.GetAppSettings(ControllerName, SettingsRCName, _appData);
+            Response appSettingsResponse = await AdsAppAPI.Instance.GetAppSettings(ControllerName, SettingsRCName, _appData);
 
             if (appSettingsResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -171,9 +136,9 @@ namespace AdsAppView.Program
         private async Task<SpriteData> GetSprite(int index = -1)
         {
             string appId = index == -1 ? _settingsData.ads_app_id : CarouselPicture + index;
-            AppData newData = new AppData() { app_id = appId, store_id = _storeName, platform = Platform };
+            AppData newData = new AppData() { app_id = appId, store_id = _appData.store_id, platform = _appData.platform};
 
-            Response filePathResponse = await _api.GetFilePath(ControllerName, FilePathRCName, newData);
+            Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, FilePathRCName, newData);
 
             if (filePathResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -182,7 +147,7 @@ namespace AdsAppView.Program
                 if (_adsFilePathsData == null)
                     Debug.LogError("Fail get file path data");
 
-                Response ftpCredentialResponse = await _api.GetRemoteConfig(ControllerName, FtpCredsRCName);
+                Response ftpCredentialResponse = await AdsAppAPI.Instance.GetRemoteConfig(ControllerName, FtpCredsRCName);
 
                 if (ftpCredentialResponse.statusCode == UnityWebRequest.Result.Success)
                 {
@@ -198,7 +163,7 @@ namespace AdsAppView.Program
 
                     if ((_caching && TryLoadCacheTexture(cacheTexturePath, out Texture2D texture)) == false)
                     {
-                        Response textureResponse = _api.GetTextureData(creds.host, _adsFilePathsData.file_path, creds.login, creds.password);
+                        Response textureResponse = AdsAppAPI.Instance.GetTextureData(creds.host, _adsFilePathsData.file_path, creds.login, creds.password);
 
                         if (textureResponse.statusCode == UnityWebRequest.Result.Success)
                         {
@@ -232,7 +197,7 @@ namespace AdsAppView.Program
 
         private async Task SetCachingConfig()
         {
-            Response cachingResponse = await _api.GetRemoteConfig(Caching);
+            Response cachingResponse = await AdsAppAPI.Instance.GetRemoteConfig(Caching);
 
             if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -251,7 +216,7 @@ namespace AdsAppView.Program
 
         private async Task SetClosingDelayConfig()
         {
-            Response cachingResponse = await _api.GetRemoteConfig(ClosingDelay);
+            Response cachingResponse = await AdsAppAPI.Instance.GetRemoteConfig(ClosingDelay);
 
             if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -270,7 +235,7 @@ namespace AdsAppView.Program
 
         private async Task SetEnablingTimeConfig()
         {
-            Response cachingResponse = await _api.GetRemoteConfig(EnablingTime);
+            Response cachingResponse = await AdsAppAPI.Instance.GetRemoteConfig(EnablingTime);
 
             if (cachingResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -328,33 +293,5 @@ namespace AdsAppView.Program
 #endif
             }
         }
-    }
-
-    public partial class PopupManager : MonoBehaviour
-    {
-        #region TEST
-#if UNITY_EDITOR
-        [Header("Test"), Tooltip("Can be null")]
-        [SerializeField] private Button _testGetTextureBtn;
-
-        private void OnEnable()
-        {
-            if (_testGetTextureBtn != null)
-                _testGetTextureBtn.onClick.AddListener(GetTexture);
-        }
-
-        private void OnDisable()
-        {
-            if (_testGetTextureBtn != null)
-                _testGetTextureBtn.onClick.RemoveListener(GetTexture);
-        }
-
-        private async void GetTexture()
-        {
-            SpriteData sprite = await GetSprite();
-            _viewPresenter.Show(sprite);
-        }
-#endif
-        #endregion
     }
 }
