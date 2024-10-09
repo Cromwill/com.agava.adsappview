@@ -21,7 +21,7 @@ namespace AdsAppView.Program
 #elif UNITY_ANDROID
         private const string Platform = "Android";
 #elif UNITY_IOS
-        private const string Platform = "Ios";
+        private const string Platform = "iOS";
 #endif
         private class AssetPath
         {

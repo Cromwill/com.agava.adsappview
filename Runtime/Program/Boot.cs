@@ -57,6 +57,7 @@ namespace AdsAppView.Program
 
         private IEnumerator Initialize()
         {
+            AnalyticsService.SendStartApp(_appId);
             Task<GameObject> task = _assetsBundlesLoader.GetPopupObject();
 
             yield return new WaitUntil(() => task.IsCompleted);

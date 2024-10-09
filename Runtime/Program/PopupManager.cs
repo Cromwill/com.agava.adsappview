@@ -91,6 +91,7 @@ namespace AdsAppView.Program
             yield return new WaitForSecondsRealtime(_firstTimerSec);
 
             _viewPresenter.Show(_sprite);
+            AnalyticsService.SendPopupView(_sprite.name);
             yield return new WaitWhile(() => _viewPresenter.Enable);
 
             if (_settingsData.carousel)
