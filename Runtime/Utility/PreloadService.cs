@@ -38,9 +38,8 @@ namespace AdsAppView.Utility
 
             SetPluginAwailable();
             yield return new WaitUntil(() => _isEndPrepare);
-#if UNITY_EDITOR || TEST
-            Debug.Log("Prepare is done. Start plugin " + IsPluginAwailable);
-#endif
+
+            Debug.Log("#PreloadService# Prepare is done. Start plugin " + IsPluginAwailable);
         }
 
         private async void SetPluginAwailable()
@@ -53,13 +52,14 @@ namespace AdsAppView.Utility
                 if (string.IsNullOrEmpty(response.body))
                 {
                     IsPluginAwailable = false;
-                    Debug.LogError($"Fail to recieve remote config '{remoteName}': NULL");
+                    Debug.LogError($"#PreloadService# Fail to recieve remote config '{remoteName}': NULL");
                 }
                 else
                 {
                     PluginSettings remotePluginSettings = JsonConvert.DeserializeObject<PluginSettings>(response.body);
-                    Debug.Log($"Plugin settings: State - {remotePluginSettings.plugin_state}, release - {remotePluginSettings.released_version}\n" +
-                        $"Test state - {remotePluginSettings.test_review},  review - {remotePluginSettings.review_version}");
+
+                    Debug.Log($"#PreloadService# Plugin settings: State - {remotePluginSettings.plugin_state}, release - {remotePluginSettings.released_version}\n" +
+                        $"---->Test state - {remotePluginSettings.test_review},  review - {remotePluginSettings.review_version}");
 
                     if (remotePluginSettings.test_review == True && _bundlIdVersion == remotePluginSettings.review_version)
                         IsPluginAwailable = true;
@@ -76,7 +76,7 @@ namespace AdsAppView.Utility
             else
             {
                 IsPluginAwailable = false;
-                Debug.LogError($"Fail to recieve remote config '{remoteName}': " + response.statusCode);
+                Debug.LogError($"#PreloadService# Fail to recieve remote config '{remoteName}': " + response.statusCode);
             }
 
             _isEndPrepare = true;

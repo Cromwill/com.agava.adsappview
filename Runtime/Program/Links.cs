@@ -62,13 +62,13 @@ namespace AdsAppView.Program
             if (response.statusCode == UnityWebRequest.Result.Success)
             {
 #if UNITY_EDITOR || TEST
-                Debug.Log($"Remote config '{key}': " + response.body);
+                Debug.Log($"#Links# Remote config '{key}': " + response.body);
 #endif
                 return response.body;
             }
             else
             {
-                Debug.LogWarning($"Fail to recieve remote config '{key}': " + response.statusCode);
+                Debug.LogWarning($"#Links# Fail to recieve remote config '{key}': " + response.statusCode);
                 return string.Empty;
             }
         }

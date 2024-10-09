@@ -72,7 +72,7 @@ namespace AdsAppView.Program
         private void OnLinkClicked()
         {
 #if UNITY_EDITOR
-            Debug.LogFormat($"Open link {_link}");
+            Debug.LogFormat($"#ViewPresenter# Open link {_link}");
 #endif
 
             if (string.IsNullOrEmpty(_link))

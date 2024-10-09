@@ -108,7 +108,7 @@ namespace AdsAppView.Utility
         public Response GetTextureData(Request request)
         {
             string address = request.api_name;
-            Debug.Log(address);
+            Debug.Log("#WebClient# Web address: " + address);
 
             byte[] downloaded = DownloadWithFTP(address, savePath: string.Empty, request.login, request.password);
             
@@ -231,10 +231,10 @@ namespace AdsAppView.Utility
 
         private void TryShowRequestInfo(UnityWebRequest webRequest, string method)
         {
-            Debug.Log($"response {method} to {webRequest.url} done {webRequest.result}. Result: {webRequest.downloadHandler.text}");
+            Debug.Log($"#WebClient# response {method} to {webRequest.url} done {webRequest.result}. Result: {webRequest.downloadHandler.text}");
 
             if (webRequest.result != UnityWebRequest.Result.Success)
-                Debug.LogError($"Response {method} fail: {webRequest.error}, {webRequest.result}");
+                Debug.LogError($"#WebClient# Response {method} fail: {webRequest.error}, {webRequest.result}");
         }
     }
 }

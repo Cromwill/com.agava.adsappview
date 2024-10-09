@@ -20,6 +20,8 @@ namespace AdsAppView.Program
         private const string Caching = "caching";
         private const string ClosingDelay = "closing-delay";
         private const string EnablingTime = "enabling-time";
+        private const int RetryCount = 3;
+        private const int RetryDelayMlsec = 30000;
 
         [SerializeField] private ViewPresenter _viewPresenter;
 
@@ -77,12 +79,12 @@ namespace AdsAppView.Program
                 }
                 else
                 {
-                    Debug.LogError("App settings is null");
+                    Debug.LogError("#PopupManager# App settings is null");
                 }
             }
             else
             {
-                Debug.LogError("Fail to getting settings: " + appSettingsResponse.statusCode);
+                Debug.LogError("#PopupManager# Fail to getting settings: " + appSettingsResponse.statusCode);
             }
         }
 
@@ -127,9 +129,19 @@ namespace AdsAppView.Program
         {
             for (int i = 0; i < _settingsData.carousel_count; i++)
             {
-                SpriteData newSprite = await GetSprite(index: i);
-                newSprite ??= _sprite;
+                SpriteData newSprite = null;
 
+                for (int s = 0; s < RetryCount; s++)
+                {
+                    newSprite = await GetSprite(index: i);
+
+                    if (newSprite != null)
+                        break;
+
+                    await Task.Delay(RetryDelayMlsec);
+                }
+
+                newSprite ??= _sprite;
                 _sprites.Add(newSprite);
             }
         }
@@ -146,7 +158,7 @@ namespace AdsAppView.Program
                 _adsFilePathsData = JsonConvert.DeserializeObject<AdsFilePathsData>(filePathResponse.body);
 
                 if (_adsFilePathsData == null)
-                    Debug.LogError("Fail get file path data");
+                    Debug.LogError("#PopupManager# Fail get file path data");
 
                 Response ftpCredentialResponse = await AdsAppAPI.Instance.GetRemoteConfig(ControllerName, FtpCredsRCName);
 
@@ -156,7 +168,7 @@ namespace AdsAppView.Program
 
                     if (creds == null)
                     {
-                        Debug.LogError("Fail get creds data");
+                        Debug.LogError("#PopupManager# Fail get creds data");
                         return null;
                     }
 
@@ -175,7 +187,7 @@ namespace AdsAppView.Program
                         }
                         else
                         {
-                            Debug.LogError("Fail to download texture: " + textureResponse.statusCode);
+                            Debug.LogError("#PopupManager# Fail to download texture: " + textureResponse.statusCode);
                             return null;
                         }
                     }
@@ -185,13 +197,13 @@ namespace AdsAppView.Program
                 }
                 else
                 {
-                    Debug.LogError("Fail to getting ftp creds: " + ftpCredentialResponse.statusCode);
+                    Debug.LogError("#PopupManager# Fail to getting ftp creds: " + ftpCredentialResponse.statusCode);
                     return null;
                 }
             }
             else
             {
-                Debug.LogError("Fail to getting file path: " + filePathResponse.statusCode);
+                Debug.LogError("#PopupManager# Fail to getting file path: " + filePathResponse.statusCode);
                 return null;
             }
         }
@@ -207,11 +219,14 @@ namespace AdsAppView.Program
                 if (bool.TryParse(body, out bool caching))
                 {
                     _caching = caching;
-
 #if UNITY_EDITOR
-                    Debug.Log("Caching set to: " + _caching);
+                    Debug.Log("#PopupManager# Caching set to: " + _caching);
 #endif
                 }
+            }
+            else
+            {
+                Debug.LogError("#PopupManager# Fail to Set Caching Config whith error: " + cachingResponse.statusCode);
             }
         }
 
@@ -226,11 +241,14 @@ namespace AdsAppView.Program
                 if (float.TryParse(body, out float closingDelay))
                 {
                     _closingDelay = closingDelay;
-
 #if UNITY_EDITOR
-                    Debug.Log("Closing delay set to: " + _closingDelay);
+                    Debug.Log("#PopupManager# Closing delay set to: " + _closingDelay);
 #endif
                 }
+            }
+            else
+            {
+                Debug.LogError("#PopupManager# Fail to Set Closing Delay Config whith error: " + cachingResponse.statusCode);
             }
         }
 
@@ -245,11 +263,14 @@ namespace AdsAppView.Program
                 if (float.TryParse(body, out float enablingTime))
                 {
                     _enablingTime = enablingTime;
-
 #if UNITY_EDITOR
-                    Debug.Log("Enabling time set to: " + _enablingTime);
+                    Debug.Log("#PopupManager# Enabling time set to: " + _enablingTime);
 #endif
                 }
+            }
+            else
+            {
+                Debug.LogError("#PopupManager# Fail to Set Enabling Time Config whith error: " + cachingResponse.statusCode);
             }
         }
 
@@ -270,7 +291,7 @@ namespace AdsAppView.Program
                 texture.LoadImage(rawData);
 
 #if UNITY_EDITOR
-                Debug.Log($"Cache texture loaded from path: {cacheFilePath}");
+                Debug.Log($"#PopupManager# Cache texture loaded from path: {cacheFilePath}");
 #endif
             }
 
@@ -282,16 +303,13 @@ namespace AdsAppView.Program
             try
             {
                 File.WriteAllBytes(cacheFilePath, texture.EncodeToPNG());
-
 #if UNITY_EDITOR
-                Debug.Log($"Cache texture saved to path: {cacheFilePath}");
+                Debug.Log($"#PopupManager# Cache texture saved to path: {cacheFilePath}");
 #endif
             }
             catch (IOException exception)
             {
-#if UNITY_EDITOR
-                Debug.LogError("Fail to save cache texture: " + exception.Message);
-#endif
+                Debug.LogError("#PopupManager# Fail to save cache texture: " + exception.Message);
             }
         }
     }
