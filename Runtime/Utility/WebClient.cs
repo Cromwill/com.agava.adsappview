@@ -105,13 +105,13 @@ namespace AdsAppView.Utility
             }
         }
 
-        public Response GetTextureData(Request request)
+        public Response GetBytesData(Request request)
         {
             string address = request.api_name;
             Debug.Log("#WebClient# Web address: " + address);
 
             byte[] downloaded = DownloadWithFTP(address, savePath: string.Empty, request.login, request.password);
-            
+
             byte[] DownloadWithFTP(string ftpUrl, string savePath = "", string userName = "", string password = "")
             {
                 if (Uri.TryCreate(ftpUrl, UriKind.Absolute, out Uri uri) == false)
@@ -181,12 +181,10 @@ namespace AdsAppView.Utility
                 fileStream.Close();
             }
 
-            Texture2D texture = new Texture2D(2, 2);
-            texture.LoadImage(downloaded);
+            UnityWebRequest.Result result = downloaded != null ? UnityWebRequest.Result.Success : UnityWebRequest.Result.DataProcessingError;
 
-            UnityWebRequest.Result result = texture != null ? UnityWebRequest.Result.Success : UnityWebRequest.Result.DataProcessingError;
+            return new Response(result, result.ToString(), "", false, downloaded);
 
-            return new Response(result, result.ToString(), "", false, texture);
         }
 
         private string GetHttpPath(string apiName, string apiData = null, bool api = true)

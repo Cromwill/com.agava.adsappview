@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bac32059065fc8b46a3d51db8bdde665, type: 3}
+  m_Name: AnimationData
+  m_EditorClassIdentifier: 
+  <SeletonDataAsset>k__BackingField: {fileID: 11400000, guid: fd25922374094064e8448b1e92b55669, type: 2}

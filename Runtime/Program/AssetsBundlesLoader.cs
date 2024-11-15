@@ -60,7 +60,7 @@ namespace AdsAppView.Program
                     return null;
                 }
 
-                string cataloPath = $"{_catalogPath}/{Platform}/catalog_{Application.version}.json";
+                string cataloPath = $"{_catalogPath}/{Platform}/catalog_1_1.json";
                 Debug.Log("#AssetsBundlesLoader# Try download catalog: " + cataloPath);
                 string pathFile = DownloadConfigFile(cataloPath, creds.login, creds.password);
 

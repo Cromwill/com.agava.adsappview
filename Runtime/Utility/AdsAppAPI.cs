@@ -96,11 +96,11 @@ namespace AdsAppView.Utility
         }
 
         /// <summary>
-        /// Send ftp request to get data
+        /// Send ftp request to get bytes data
         /// </summary>
         /// <param name="host">Need data ftp server name/login/pass</param>
         /// <returns></returns>
-        public Response GetTextureData(string host, string filePath, string login, string password)
+        public Response GetBytesData(string host, string filePath, string login, string password)
         {
             EnsureInitialize();
             string path = host + "/" + filePath;
@@ -112,7 +112,7 @@ namespace AdsAppView.Utility
                 password = password,
             };
 
-            return _webClient.GetTextureData(request);
+            return _webClient.GetBytesData(request);
         }
 
         private void EnsureInitialize()
