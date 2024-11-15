@@ -7,7 +7,6 @@ namespace AdsAppView.Program
     {
         [SerializeField] private ImageViewPresenter _imageViewPresenter;
         [SerializeField] private VideoViewPresenter _videoViewPresenter;
-        [SerializeField] private WebViewPresenter _webViewPresenter;
         [SerializeField] private AnimationViewPresenter _animationViewPresenter;
 
         private Dictionary<string, GameObject> _mapping;
@@ -18,7 +17,6 @@ namespace AdsAppView.Program
             {
                 { "image", _imageViewPresenter ?.gameObject},
                 { "video", _videoViewPresenter?.gameObject},
-                { "web", _webViewPresenter?.gameObject},
                 { "animation", _animationViewPresenter?.gameObject },
                 {"default", _imageViewPresenter?.gameObject},
             };

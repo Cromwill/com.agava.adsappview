@@ -5,8 +5,7 @@
         "com.unity.addressables": "1.21.21",
         "com.unity.nuget.newtonsoft-json": "3.0.2",
         "com.unity.textmeshpro": "3.0.9",
-        "io.appmetrica.analytics": "6.1.0",
-		"net.gree.unity-webview": "1.0.0"
+        "io.appmetrica.analytics": "6.1.0"
     },
     "description": "View ads app on device",
     "displayName": "Ads App`s viewer",
