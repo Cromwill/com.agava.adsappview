@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7580106813393124463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7275052375419752052}
+  - component: {fileID: 5260555599139361273}
+  - component: {fileID: 5344608406705195032}
+  - component: {fileID: 2954520658313410338}
+  m_Layer: 0
+  m_Name: BootPopup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7275052375419752052
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580106813393124463}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5260555599139361273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580106813393124463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c0113b39f35ec34ca3cca5e130c16a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _links: {fileID: 5344608406705195032}
+  _viewPresenterConfigs: {fileID: 2954520658313410338}
+  _bundlIdVersion: 1
+  _storeName: test
+  _serverPath: gamesrtkbd.tech
+  _freeApp: 0
+  _useAssetBundles: 0
+  _assetsBundlesLoader:
+    _catalogPath: ftp://ftp-p.ctcmedia.ru/mediartk/AssetsBundles
+    _assetName: Packages/com.agava.adsappview/Samples/Prefabs/PopupManager.prefab
+  _defaultAsset: {fileID: 4345493700653099215, guid: 25530c29e02c8df41a7b8bdc2b040a0a, type: 3}
+--- !u!114 &5344608406705195032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580106813393124463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3233bf3704bfe642b13e5f5632dfc5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2954520658313410338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580106813393124463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dfdf8355171e954296945fac3bc2abc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
