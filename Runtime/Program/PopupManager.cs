@@ -6,6 +6,8 @@ using UnityEngine.Networking;
 using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
+using System;
+using Codice.Client.Common;
 
 namespace AdsAppView.Program
 {
@@ -13,6 +15,8 @@ namespace AdsAppView.Program
     {
         private const string ControllerName = "AdsApp";
         private const string SettingsRCName = "app-settings";
+        private const string PayedSettingsRCName = "popup-payed-settings";
+        private const string PayedConfigRCName = "popup-payed-configs";
         private const string FilePathRCName = "file-path";
         private const string FtpCredsRCName = "ftp-creds";
         private const string CarouselPicture = "picrure";
@@ -26,7 +30,8 @@ namespace AdsAppView.Program
         private IViewPresenter _viewPresenter;
 
         private AppData _appData;
-        private AppSettingsData _settingsData;
+        private AppSettingsData _freeAppConfigData;
+        private PopupPayedConfigsData _payedConfigData;
         private AdsFilePathsData _adsFilePathsData;
 
         private readonly List<PopupData> _popupDataList = new();
@@ -36,8 +41,16 @@ namespace AdsAppView.Program
         private float _regularTimerSec = 180f;
         private bool _caching = false;
 
-        public IEnumerator Construct(AppData appData)
+        private bool _vip = false;
+        private bool _isPayedPopupRoutineWorked = false;
+        private int _indexPopupCarosel = 0;
+
+        public static PopupManager Instance { get; private set; }
+
+        public IEnumerator Construct(AppData appData, bool freeApp, bool vip)
         {
+            Instance = this;
+            _vip = vip;
             _viewPresenter = _viewPresenterFactory.InstantiateViewPresenter(ViewPresenterConfigs.ViewPresenterType);
 
             _gamePause.Initialize(_viewPresenter);
@@ -48,45 +61,145 @@ namespace AdsAppView.Program
             if (Application.internetReachability == NetworkReachability.NotReachable)
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
-            StartView();
+            StartView(freeApp);
         }
 
-        private async void StartView()
+        public void ShowPopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
+
+        private async void StartView(bool freeApp)
         {
-            Response appSettingsResponse = await AdsAppAPI.Instance.GetAppSettings(ControllerName, SettingsRCName, _appData);
+            Response appSettingsPayedResponse;
+            Response appSettingsCommonResponse;
 
-            if (appSettingsResponse.statusCode == UnityWebRequest.Result.Success)
+            if (freeApp)
             {
-                AppSettingsData data = JsonConvert.DeserializeObject<AppSettingsData>(appSettingsResponse.body);
+                appSettingsCommonResponse = await AdsAppAPI.Instance.GetAppSettings(ControllerName, SettingsRCName, _appData);
 
-                if (data != null)
+                if (appSettingsCommonResponse.statusCode == UnityWebRequest.Result.Success)
                 {
-                    await SetCachingConfig();
+                    AppSettingsData data = JsonConvert.DeserializeObject<AppSettingsData>(appSettingsCommonResponse.body);
 
-                    _settingsData = data;
-                    _firstTimerSec = data.first_timer;
-                    _regularTimerSec = data.regular_timer;
+                    if (data != null)
+                    {
+                        await SetCachingConfig();
 
-                    _popupData = await GetPopupData();
+                        _freeAppConfigData = data;
+                        _firstTimerSec = data.first_timer;
+                        _regularTimerSec = data.regular_timer;
 
-                    if (_popupData != null)
-                        StartCoroutine(ShowingAds());
+                        _popupData = await GetPopupData();
 
-                    if (_settingsData.carousel)
-                        await FillPopupDataList();
+                        if (_popupData != null)
+                            StartCoroutine(ShowingAdsFreeApp());
+                        else
+                            Debug.LogError("#PopupManager# Fail get popup datas");
+
+                        if (_freeAppConfigData.carousel)
+                            await FillPopupDataList();
+                    }
+                    else
+                    {
+                        Debug.LogError("#PopupManager# App settings is null");
+                    }
                 }
                 else
                 {
-                    Debug.LogError("#PopupManager# App settings is null");
+                    Debug.LogError("#PopupManager# Fail to getting settings: " + appSettingsCommonResponse.statusCode);
                 }
             }
-            else
+            else //Payed popup initializing
             {
-                Debug.LogError("#PopupManager# Fail to getting settings: " + appSettingsResponse.statusCode);
+                RequestPayedPopupData requestData = new() { app_id = _appData.app_id, platform = _appData.platform, store_id = _appData.store_id, vip = _vip };
+                appSettingsPayedResponse = await AdsAppAPI.Instance.GetAppSettings(ControllerName, PayedConfigRCName, requestData);
+
+                if (appSettingsPayedResponse.statusCode == UnityWebRequest.Result.Success)
+                {
+                    PopupPayedConfigsData data = JsonConvert.DeserializeObject<PopupPayedConfigsData>(appSettingsPayedResponse.body);
+
+                    if (data != null)
+                    {
+                        await SetCachingConfig();
+
+                        _freeAppConfigData = new()
+                        {
+                            app_id = data.app_id,
+                            platform = data.platform,
+                            store_id = data.store_id,
+                            ads_app_id = data.ads_app_id,
+                            first_timer = data.first_timer,
+                            regular_timer = data.regular_timer,
+                            carousel = data.carousel,
+                            carousel_count = data.carousel_count
+                        };
+
+                        _payedConfigData = data;
+                        _firstTimerSec = data.first_timer;
+                        _regularTimerSec = data.regular_timer;
+
+                        _popupData = await GetPopupData();
+
+                        if (_popupData == null)
+                        {
+                            Debug.LogError("#PopupManager# Fail get popup datas");
+                        }
+                        else
+                        {
+                            StartCoroutine(Waiting(_firstTimerSec));
+                            IEnumerator Waiting(float time)
+                            {
+                                _isPayedPopupRoutineWorked = true;
+                                yield return new WaitForSecondsRealtime(time);
+                                _isPayedPopupRoutineWorked = false;
+                            }
+                        }
+
+                        if (_payedConfigData.carousel)
+                            await FillPopupDataList();
+                    }
+                    else
+                    {
+                        Debug.LogError("#PopupManager# App payed settings is null");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("#PopupManager# Fail to getting payed settings: " + appSettingsPayedResponse.statusCode);
+                }
             }
         }
 
-        private IEnumerator ShowingAds()
+        private IEnumerator ShowingPopupPayedApp()
+        {
+            if (_isPayedPopupRoutineWorked)
+                yield break;
+
+            if (_payedConfigData.carousel)
+            {
+                _isPayedPopupRoutineWorked = true;
+                yield return ShowingPopup(_regularTimerSec, _popupDataList[_indexPopupCarosel]);
+
+                _indexPopupCarosel++;
+
+                if (_indexPopupCarosel >= _popupDataList.Count)
+                    _indexPopupCarosel = 0;
+            }
+            else
+            {
+                _isPayedPopupRoutineWorked = true;
+                yield return ShowingPopup(_regularTimerSec, _popupData);
+            }
+
+            IEnumerator ShowingPopup(float time, PopupData popupData)
+            {
+                _viewPresenter.Show(popupData);
+                AnalyticsService.SendPopupView(popupData.name);
+                yield return new WaitWhile(() => _viewPresenter.Enable);
+                yield return new WaitForSecondsRealtime(time);
+                _isPayedPopupRoutineWorked = false;
+            }
+        }
+
+        private IEnumerator ShowingAdsFreeApp()
         {
             IEnumerator ShowingPopup(float time, PopupData popupData)
             {
@@ -98,7 +211,7 @@ namespace AdsAppView.Program
 
             yield return ShowingPopup(_firstTimerSec, _popupData);
 
-            if (_settingsData.carousel)
+            if (_freeAppConfigData.carousel)
             {
                 int index = 0;
 
@@ -123,7 +236,7 @@ namespace AdsAppView.Program
 
         private async Task FillPopupDataList()
         {
-            for (int i = 0; i < _settingsData.carousel_count; i++)
+            for (int i = 0; i < _freeAppConfigData.carousel_count; i++)
             {
                 PopupData newSprite = null;
 
@@ -144,8 +257,8 @@ namespace AdsAppView.Program
 
         private async Task<PopupData> GetPopupData(int index = -1)
         {
-            string appId = index == -1 ? _settingsData.ads_app_id : CarouselPicture + index;
-            AppData newData = new AppData() { app_id = appId, store_id = _appData.store_id, platform = _appData.platform };
+            string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
+            AppData newData = new() { app_id = appId, store_id = _appData.store_id, platform = _appData.platform };
 
             Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, FilePathRCName, newData);
 
@@ -222,5 +335,9 @@ namespace AdsAppView.Program
                 Debug.LogError("#PopupManager# Fail to Set Caching Config whith error: " + cachingResponse.statusCode);
             }
         }
+#if UNITY_EDITOR
+        [ContextMenu("Show popup")]
+        private void Show() => StartCoroutine(ShowingPopupPayedApp());
+#endif
     }
 }

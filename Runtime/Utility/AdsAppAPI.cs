@@ -32,16 +32,16 @@ namespace AdsAppView.Utility
             Instance = this;
         }
 
+        public async Task<Response> GetRemoteSettings(string remoteName)
+        {
+            EnsureInitialize();
+            return await _webClient.GetPluginSettings("RemoteConfig", remoteName);
+        }
+
         public async Task<Response> GetRemoteConfig(string remoteName)
         {
             EnsureInitialize();
             return await _webClient.GetRemote("Remoteconfig", remoteName);
-        }
-
-        public async Task<Response> GetPluginSettings(string remoteName)
-        {
-            EnsureInitialize();
-            return await _webClient.GetPluginSettings("RemoteConfig", remoteName);
         }
 
         public async Task<Response> GetRemoteConfig(string controllerName, string apiName)
@@ -82,7 +82,7 @@ namespace AdsAppView.Utility
             return await _webClient.GetFilePath(request);
         }
 
-        public async Task<Response> GetAppSettings(string controllerName, string apiName, AppData data)
+        public async Task<Response> GetAppSettings<T>(string controllerName, string apiName, T data) where T : class
         {
             EnsureInitialize();
 

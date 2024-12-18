@@ -9,6 +9,7 @@ namespace AdsAppView.Program
 {
     public class Boot : MonoBehaviour
     {
+        private const float DelayWhileAuthPluginInit = 10f;
 #if UNITY_STANDALONE
         private const string Platform = "standalone";
 #elif UNITY_ANDROID
@@ -27,6 +28,7 @@ namespace AdsAppView.Program
         [Tooltip("Server name remote data")]
         [SerializeField] private string _serverPath;
         [Tooltip("Assets settings")]
+        [SerializeField] private bool _freeApp = true;
         [SerializeField] private bool _useAssetBundles = true;
         [SerializeField] private AssetsBundlesLoader _assetsBundlesLoader;
         [SerializeField] private GameObject _defaultAsset;
@@ -36,32 +38,45 @@ namespace AdsAppView.Program
         private AppData _appData;
         private PreloadService _preloadService;
 
+        public static Boot Instance { get; private set; }
+
         private IEnumerator Start()
         {
+            Instance = this;
             DontDestroyOnLoad(gameObject);
 
+            if (_freeApp)
+                yield return Construct(vip: false);
+        }
+
+        public IEnumerator Construct(bool vip)
+        {
             if (Application.internetReachability == NetworkReachability.NotReachable)
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
             _api = new(_serverPath, _appId);
             _appData = new() { app_id = _appId, store_id = _storeName, platform = Platform };
-            _preloadService = new(_api, _bundlIdVersion);
+            _preloadService = new(_api, _bundlIdVersion, _freeApp, vip, _appData);
             Debug.Log("#Boot# " + JsonConvert.SerializeObject(_appData));
 
             yield return _preloadService.Preparing();
-            yield return _links.Initialize(_api);
+
+            if (_freeApp)
+                yield return _links.Initialize(_api);
+
             yield return _viewPresenterConfigs.Initialize(_api);
 
             if (_preloadService.IsPluginAvailable)
-                yield return Initialize();
+                yield return Initialize(vip);
             else
-                Debug.Log("#Boot# Plugin disabled");
+                Debug.Log("#Boot# Popup plugin disabled");
         }
 
-        private IEnumerator Initialize()
+        private IEnumerator Initialize(bool vip)
         {
             AnalyticsService.SendStartApp(_appId);
             GameObject created = null;
+            Debug.Log("#Boot# Popup plugin enabled");
 
             if (_useAssetBundles)
             {
@@ -87,7 +102,7 @@ namespace AdsAppView.Program
                 Debug.Log("#Boot# Default-PopupManager Instantiated");
             }
 
-            yield return created.GetComponent<PopupManager>().Construct(_appData);
+            yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip);
         }
     }
 }
