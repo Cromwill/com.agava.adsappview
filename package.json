@@ -16,6 +16,11 @@
       "path": "Samples~/Prefabs"
     },
     {
+      "description": "Contains Appmetrica Activator Script",
+      "displayName": "AppmetricaActivator",
+      "path": "Samples~/AppmetricaActivator"
+    },
+    {
       "description": "Contains art",
       "displayName": "Art",
       "path": "Samples~/Art"
