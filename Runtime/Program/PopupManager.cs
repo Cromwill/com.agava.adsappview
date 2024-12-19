@@ -6,8 +6,6 @@ using UnityEngine.Networking;
 using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
-using System;
-using Codice.Client.Common;
 
 namespace AdsAppView.Program
 {
