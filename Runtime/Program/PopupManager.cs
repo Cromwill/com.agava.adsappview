@@ -47,6 +47,14 @@ namespace AdsAppView.Program
 
         public static PopupManager Instance { get; private set; }
 
+        public static void ShowPopupPayedApp()
+        {
+            if (Instance != null)
+            {
+                Instance.ShowInstancePopupPayedApp();
+            }
+        }
+
         public IEnumerator Construct(AppData appData, bool freeApp, bool vip)
         {
             Instance = this;
@@ -64,7 +72,7 @@ namespace AdsAppView.Program
             StartView(freeApp);
         }
 
-        public void ShowPopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
+        private void ShowInstancePopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
 
         private async void StartView(bool freeApp)
         {
