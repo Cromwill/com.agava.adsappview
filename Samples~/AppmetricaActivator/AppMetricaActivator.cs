@@ -21,7 +21,6 @@ namespace AdsAppView.Utility
 
             AppMetrica.Activate(new AppMetricaConfig(key)
             {
-                LocationTracking = false,
                 FirstActivationAsUpdate = !IsFirstLaunch(),
             });
 
