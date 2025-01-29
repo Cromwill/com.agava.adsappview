@@ -14,6 +14,8 @@ namespace AdsAppView.Program
 
         private RawImage _videoPlayerImage;
 
+        public override bool Background => false;
+
         public override void Show(PopupData popupData)
         {
             _videoPlayerImage = _player.GetComponent<RawImage>();

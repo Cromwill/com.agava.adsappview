@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace AdsAppView.Program
 {
@@ -15,10 +16,12 @@ namespace AdsAppView.Program
         private const string SettingsRCName = "app-settings";
         private const string PayedSettingsRCName = "popup-payed-settings";
         private const string PayedConfigRCName = "popup-payed-configs";
-        private const string FilePathRCName = "file-path";
+        private const string DirectoryPathRCName = "file-path";
         private const string FtpCredsRCName = "ftp-creds";
         private const string CarouselPicture = "picrure";
         private const string Caching = "caching";
+        private const string BackgroundFileName = "background.png";
+        private const string PlayButtonFileName = "button.png";
         private const int RetryCount = 3;
         private const int RetryDelayMlsec = 30000;
 
@@ -267,7 +270,7 @@ namespace AdsAppView.Program
             string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
             AppData newData = new() { app_id = appId, store_id = _appData.store_id, platform = _appData.platform };
 
-            Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, FilePathRCName, newData);
+            Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
 
             if (filePathResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -288,25 +291,26 @@ namespace AdsAppView.Program
                         return null;
                     }
 
-                    string cacheFilePath = FileUtils.ConstructFilePath(_adsFilePathsData.file_path, _adsFilePathsData.ads_app_id);
+                    string popupCacheFilePath = FileUtils.ConstructCacheFilePath(_adsFilePathsData.file_path);
+                    PopupData popupData = null;
 
-                    if ((_caching && FileUtils.TryLoadFile(cacheFilePath, out byte[] bytes)) == false)
+                    if (TryLoadBytes(creds, _adsFilePathsData.file_path, popupCacheFilePath, out byte[] body))
                     {
-                        Response textureResponse = AdsAppAPI.Instance.GetBytesData(creds.host, _adsFilePathsData.file_path, creds.login, creds.password);
+                        popupData = new PopupData() { body = body, link = _adsFilePathsData.app_link, name = _adsFilePathsData.ads_app_id, path = popupCacheFilePath };
+                        string directory = Path.GetDirectoryName(_adsFilePathsData.file_path);
+                        string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
 
-                        if (textureResponse.statusCode == UnityWebRequest.Result.Success)
+                        if (TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName), out Sprite playButtonSprite))
+                            popupData.play_button = playButtonSprite;
+
+                        if (_viewPresenter.Background)
                         {
-                            bytes = textureResponse.bytes;
-                            FileUtils.TrySaveFile(cacheFilePath, bytes);
-                        }
-                        else
-                        {
-                            Debug.LogError("#PopupManager# Fail to download texture: " + textureResponse.statusCode);
-                            return null;
+                            if (TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName), out Sprite backgroundSprite))
+                                popupData.background = backgroundSprite;
                         }
                     }
 
-                    return new PopupData() { bytes = bytes, link = _adsFilePathsData.app_link, name = _adsFilePathsData.file_path, path = cacheFilePath };
+                    return popupData;
                 }
                 else
                 {
@@ -319,6 +323,39 @@ namespace AdsAppView.Program
                 Debug.LogError("#PopupManager# Fail to getting file path: " + filePathResponse.statusCode);
                 return null;
             }
+        }
+
+        private bool TryLoadBytes(FtpCreds creds, string serverFilePath, string cacheFilePath, out byte[] bytes)
+        {
+            bytes = null;
+
+            if ((_caching && FileUtils.TryLoadFile(cacheFilePath, out bytes)) == false)
+            {
+                Response textureResponse = AdsAppAPI.Instance.GetBytesData(creds.host, serverFilePath, creds.login, creds.password);
+
+                if (textureResponse.statusCode == UnityWebRequest.Result.Success)
+                {
+                    bytes = textureResponse.bytes;
+                    FileUtils.TrySaveFile(cacheFilePath, bytes);
+                }
+                else
+                {
+                    Debug.LogError("#PopupManager# Fail to download texture: " + textureResponse.statusCode);
+                }
+            }
+
+            return bytes != null;
+        }
+
+        private bool TryLoadSprite(FtpCreds creds, string serverFilePath, out Sprite sprite)
+        {
+            sprite = null;
+            string cacheFilePath = FileUtils.ConstructCacheFilePath(serverFilePath);
+
+            if (TryLoadBytes(creds, serverFilePath, cacheFilePath, out byte[] bytes))
+                sprite = FileUtils.LoadSprite(bytes);
+
+            return sprite != null;
         }
 
         private async Task SetCachingConfig()
@@ -342,6 +379,9 @@ namespace AdsAppView.Program
                 Debug.LogError("#PopupManager# Fail to Set Caching Config whith error: " + cachingResponse.statusCode);
             }
         }
+
+        private string FullFilePath(string appId, string directoryPath, string fileName) => Path.Combine(directoryPath, $"{appId}-{fileName}");
+
 #if UNITY_EDITOR
         [ContextMenu("Show popup")]
         private void Show() => StartCoroutine(ShowingPopupPayedApp());

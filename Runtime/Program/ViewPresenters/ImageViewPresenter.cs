@@ -11,15 +11,20 @@ namespace AdsAppView.Program
         [SerializeField] private AspectRatioFitter _aspectRatioFitter;
         [SerializeField] private Image _popupImage;
 
+        public override bool Background => true;
+
         public override void Show(PopupData popupData)
         {
-            Texture2D texture = new Texture2D(2, 2);
-            texture.LoadImage(popupData.bytes);
+            Sprite popupSprite = FileUtils.LoadSprite(popupData.body);
+            _popupImage.sprite = popupSprite;
+            _aspectRatioFitter.aspectRatio = (float)popupSprite.texture.width / popupSprite.texture.height;
 
-            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            if (popupData.background != null)
+                background.sprite = popupData.background;
 
-            _popupImage.sprite = sprite;
-            _aspectRatioFitter.aspectRatio = (float)texture.width / texture.height;
+            if (popupData.play_button != null)
+                linkButtonImage.sprite = popupData.play_button;
+
             link = popupData.link;
             lastSpriteName = popupData.name;
 

@@ -6,6 +6,7 @@ namespace AdsAppView.Program
     public interface IViewPresenter
     {
         bool Enable { get; }
+        bool Background { get; }
 
         event Action Enabled;
         event Action Disabled;

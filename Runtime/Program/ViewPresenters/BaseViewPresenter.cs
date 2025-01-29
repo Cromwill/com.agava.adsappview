@@ -24,6 +24,7 @@ public abstract class BaseViewPresenter : MonoBehaviour, IViewPresenter
     protected string lastSpriteName;
 
     public bool Enable { get; private set; } = false;
+    public abstract bool Background { get; }
 
     public event Action Enabled;
     public event Action Disabled;

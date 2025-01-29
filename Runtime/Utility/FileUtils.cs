@@ -5,10 +5,10 @@ namespace AdsAppView.Utility
 {
     public static class FileUtils
     {
-        public static string ConstructFilePath(string filePath, string name)
+        public static string ConstructCacheFilePath(string filePath)
         {
-            string extension = Path.GetExtension(filePath);
-            return Path.Combine(Application.persistentDataPath, name + extension);
+            string name = Path.GetFileName(filePath);
+            return Path.Combine(Application.persistentDataPath, name);
         }
 
         public static bool TryLoadFile(string filePath, out byte[] bytes)
@@ -65,6 +65,14 @@ namespace AdsAppView.Utility
         public static void TrySaveTexture(string filePath, Texture2D texture)
         {
             TrySaveFile(filePath, texture.EncodeToPNG());
+        }
+
+        public static Sprite LoadSprite(byte[] bytes)
+        {
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(bytes);
+
+            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
         }
     }
 }
