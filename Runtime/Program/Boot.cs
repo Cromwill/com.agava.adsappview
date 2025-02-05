@@ -10,12 +10,14 @@ namespace AdsAppView.Program
     public class Boot : MonoBehaviour
     {
         private const float DelayWhileAuthPluginInit = 10f;
-#if UNITY_STANDALONE
+#if UNITY_WEBGL
+        private const string Platform = "webgl";
+#elif UNITY_STANDALONE
         private const string Platform = "standalone";
 #elif UNITY_ANDROID
-        private const string Platform = "android";
+        private const string Platform = "Android";
 #elif UNITY_IOS
-        private const string Platform = "ios";
+        private const string Platform = "iOS";
 #endif
 
         [SerializeField] private Links _links;
@@ -33,7 +35,15 @@ namespace AdsAppView.Program
         [SerializeField] private AssetsBundlesLoader _assetsBundlesLoader;
         [SerializeField] private GameObject _defaultAsset;
 
+#if UNITY_WEBGL
+        [Header("WEBGL")]
+        [SerializeField] private string _appId;
+#endif
+
+#if UNITY_ANDROID || UNITY_IOS
         private string _appId => Application.identifier;
+#endif
+
         private AdsAppAPI _api;
         private AppData _appData;
         private PreloadService _preloadService;

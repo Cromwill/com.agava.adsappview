@@ -16,7 +16,9 @@ namespace AdsAppView.Program
     [Serializable]
     public class AssetsBundlesLoader
     {
-#if UNITY_STANDALONE
+#if UNITY_WEBGL
+        private const string Platform = "webgl";
+#elif UNITY_STANDALONE
         private const string Platform = "standalone";
 #elif UNITY_ANDROID
         private const string Platform = "Android";

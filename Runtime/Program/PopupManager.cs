@@ -17,6 +17,7 @@ namespace AdsAppView.Program
         private const string PayedSettingsRCName = "popup-payed-settings";
         private const string PayedConfigRCName = "popup-payed-configs";
         private const string DirectoryPathRCName = "file-path";
+        private const string SourceLinkRCName = "source-link";
         private const string FtpCredsRCName = "ftp-creds";
         private const string CarouselPicture = "picrure";
         private const string Caching = "caching";
@@ -267,60 +268,76 @@ namespace AdsAppView.Program
 
         private async Task<PopupData> GetPopupData(int index = -1)
         {
-            string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
-            AppData newData = new() { app_id = appId, store_id = _appData.store_id, platform = _appData.platform };
+            AppData newData = new() { app_id = _appData.app_id, store_id = _appData.store_id, platform = _appData.platform };
+            Response sourceLinkResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, SourceLinkRCName, newData);
 
-            Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
-
-            if (filePathResponse.statusCode == UnityWebRequest.Result.Success)
+            if (sourceLinkResponse.statusCode == UnityWebRequest.Result.Success)
             {
-                _adsFilePathsData = JsonConvert.DeserializeObject<AdsFilePathsData>(filePathResponse.body);
+                if (string.IsNullOrEmpty(sourceLinkResponse.body))
+                    Debug.LogError("#PopupManager# Source link from data base is empty");
 
-                if (_adsFilePathsData == null)
-                    Debug.LogError("#PopupManager# Fail get file path data");
+                string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
+                newData.app_id = appId;
+                Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
 
-                Response ftpCredentialResponse = await AdsAppAPI.Instance.GetRemoteConfig(ControllerName, FtpCredsRCName);
-
-                if (ftpCredentialResponse.statusCode == UnityWebRequest.Result.Success)
+                if (filePathResponse.statusCode == UnityWebRequest.Result.Success)
                 {
-                    FtpCreds creds = JsonConvert.DeserializeObject<FtpCreds>(ftpCredentialResponse.body);
+                    _adsFilePathsData = JsonConvert.DeserializeObject<AdsFilePathsData>(filePathResponse.body);
 
-                    if (creds == null)
+                    if (_adsFilePathsData == null)
+                        Debug.LogError("#PopupManager# Fail get file path data");
+
+                    Response ftpCredentialResponse = await AdsAppAPI.Instance.GetRemoteConfig(ControllerName, FtpCredsRCName);
+
+                    if (ftpCredentialResponse.statusCode == UnityWebRequest.Result.Success)
                     {
-                        Debug.LogError("#PopupManager# Fail get creds data");
+                        FtpCreds creds = JsonConvert.DeserializeObject<FtpCreds>(ftpCredentialResponse.body);
+
+                        if (creds == null)
+                        {
+                            Debug.LogError("#PopupManager# Fail get creds data");
+                            return null;
+                        }
+
+                        string popupCacheFilePath = FileUtils.ConstructCacheFilePath(_adsFilePathsData.file_path);
+                        PopupData popupData = null;
+
+                        if (TryLoadBytes(creds, _adsFilePathsData.file_path, popupCacheFilePath, out byte[] body))
+                        {
+                            string sourceLink = JsonConvert.DeserializeObject<string>(sourceLinkResponse.body);
+                            string link = _adsFilePathsData.app_link + sourceLink;
+                            Debug.Log($"#PopupManager# Source link created: {link}");
+                            popupData = new PopupData() { body = body, link = link, name = _adsFilePathsData.ads_app_id, path = popupCacheFilePath };
+                            string directory = Path.GetDirectoryName(_adsFilePathsData.file_path);
+                            string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
+
+                            if (TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName), out Sprite playButtonSprite))
+                                popupData.play_button = playButtonSprite;
+
+                            if (_viewPresenter.Background)
+                            {
+                                if (TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName), out Sprite backgroundSprite))
+                                    popupData.background = backgroundSprite;
+                            }
+                        }
+
+                        return popupData;
+                    }
+                    else
+                    {
+                        Debug.LogError("#PopupManager# Fail to getting ftp creds: " + ftpCredentialResponse.statusCode);
                         return null;
                     }
-
-                    string popupCacheFilePath = FileUtils.ConstructCacheFilePath(_adsFilePathsData.file_path);
-                    PopupData popupData = null;
-
-                    if (TryLoadBytes(creds, _adsFilePathsData.file_path, popupCacheFilePath, out byte[] body))
-                    {
-                        popupData = new PopupData() { body = body, link = _adsFilePathsData.app_link, name = _adsFilePathsData.ads_app_id, path = popupCacheFilePath };
-                        string directory = Path.GetDirectoryName(_adsFilePathsData.file_path);
-                        string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
-
-                        if (TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName), out Sprite playButtonSprite))
-                            popupData.play_button = playButtonSprite;
-
-                        if (_viewPresenter.Background)
-                        {
-                            if (TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName), out Sprite backgroundSprite))
-                                popupData.background = backgroundSprite;
-                        }
-                    }
-
-                    return popupData;
                 }
                 else
                 {
-                    Debug.LogError("#PopupManager# Fail to getting ftp creds: " + ftpCredentialResponse.statusCode);
+                    Debug.LogError("#PopupManager# Fail to getting file path: " + filePathResponse.statusCode);
                     return null;
                 }
             }
             else
             {
-                Debug.LogError("#PopupManager# Fail to getting file path: " + filePathResponse.statusCode);
+                Debug.LogError("#PopupManager# Fail to getting source link: " + sourceLinkResponse.statusCode);
                 return null;
             }
         }

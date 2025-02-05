@@ -57,6 +57,7 @@ MonoBehaviour:
     _catalogPath: ftp://ftp-p.ctcmedia.ru/mediartk/AssetsBundles
     _assetName: Packages/com.agava.adsappview/Samples/Prefabs/PopupManager.prefab
   _defaultAsset: {fileID: 4345493700653099215, guid: 25530c29e02c8df41a7b8bdc2b040a0a, type: 3}
+  _appId: 
 --- !u!114 &5344608406705195032
 MonoBehaviour:
   m_ObjectHideFlags: 0
