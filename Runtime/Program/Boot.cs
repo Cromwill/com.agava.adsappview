@@ -26,7 +26,7 @@ namespace AdsAppView.Program
         [Tooltip("Bund for plugin settings")]
         [SerializeField] private int _bundlIdVersion = 1;
         [Tooltip("Store name")]
-        [SerializeField] private string _storeName;
+        [SerializeField] private Store _storeName;
         [Tooltip("Server name remote data")]
         [SerializeField] private string _serverPath;
         [Tooltip("Assets settings")]
@@ -65,7 +65,7 @@ namespace AdsAppView.Program
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
             _api = new(_serverPath, _appId);
-            _appData = new() { app_id = _appId, store_id = _storeName, platform = Platform };
+            _appData = new() { app_id = _appId, store_id = _storeName.ToString(), platform = Platform };
             _preloadService = new(_api, _bundlIdVersion, _freeApp, vip, _appData);
             Debug.Log("#Boot# " + JsonConvert.SerializeObject(_appData));
 
@@ -113,6 +113,15 @@ namespace AdsAppView.Program
             }
 
             yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip);
+        }
+
+        private enum Store
+        {
+            AppStore,
+            Google,
+            Huawei,
+            RuStore,
+            test
         }
     }
 }
