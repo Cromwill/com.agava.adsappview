@@ -72,12 +72,13 @@ namespace AdsAppView.Program
             if (Application.internetReachability == NetworkReachability.NotReachable)
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
-            StartView(freeApp);
+            Task task = StartView(freeApp);
+            yield return new WaitUntil(() => task.IsCompleted);
         }
 
         private void ShowInstancePopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
 
-        private async void StartView(bool freeApp)
+        private async Task StartView(bool freeApp)
         {
             Response appSettingsPayedResponse;
             Response appSettingsCommonResponse;
