@@ -47,6 +47,7 @@ namespace AdsAppView.Program
         private bool _isPayedPopupRoutineWorked = false;
         private int _indexPopupCarosel = 0;
 
+        public bool CanShowPopup => _isPayedPopupRoutineWorked == false;
         public float RegularTimeSec => _regularTimerSec;
         public static PopupManager Instance { get; private set; }
 
