@@ -14,7 +14,7 @@ namespace AdsAppView.Utility
         {
             string key = TestKey;
 
-            var info = Resources.Load<AppMetricaInfo>("AppMetricaInfo");
+            var info = Resources.Load<AdsAppView.DTO.AppMetricaInfo>("AppMetricaInfo");
 
             if (info != null)
                 key = info.Key;
