@@ -92,6 +92,7 @@ public abstract class BaseViewPresenter : MonoBehaviour, IViewPresenter
 
         AnalyticsService.SendPopupRedirectClick(lastSpriteName, _count);
         Application.OpenURL(link);
+        DisableCanvasGroup(_windowCanvasGrp);
     }
 
     private void OnCloseClicked()
