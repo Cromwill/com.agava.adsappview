@@ -54,9 +54,7 @@ namespace AdsAppView.Program
         public static void ShowPopupPayedApp()
         {
             if (Instance != null)
-            {
                 Instance.ShowInstancePopupPayedApp();
-            }
         }
 
         public IEnumerator Construct(AppData appData, bool freeApp, bool vip)
@@ -76,6 +74,8 @@ namespace AdsAppView.Program
             Task task = StartView(freeApp);
             yield return new WaitUntil(() => task.IsCompleted);
         }
+
+        public void OnSubscribeDetected() => _vip = true;
 
         private void ShowInstancePopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
 
@@ -163,6 +163,9 @@ namespace AdsAppView.Program
                                 _isPayedPopupRoutineWorked = true;
                                 yield return new WaitForSecondsRealtime(time);
                                 _isPayedPopupRoutineWorked = false;
+
+                                if (freeApp == false)
+                                    yield return ShowingOnTimer();
                             }
                         }
 
@@ -177,6 +180,26 @@ namespace AdsAppView.Program
                 else
                 {
                     Debug.LogError("#PopupManager# Fail to getting payed settings: " + appSettingsPayedResponse.statusCode);
+                }
+            }
+        }
+
+        private IEnumerator ShowingOnTimer()
+        {
+            var wait = new WaitForSecondsRealtime(5);
+
+            while (true)
+            {
+                if (_vip == false)
+                {
+                    if (_isPayedPopupRoutineWorked)
+                        yield return null;
+                    else
+                        yield return ShowingPopupPayedApp();
+                }
+                else
+                {
+                    yield return wait;
                 }
             }
         }
