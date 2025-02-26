@@ -43,6 +43,7 @@ namespace AdsAppView.Program
         private float _regularTimerSec = 180f;
         private bool _caching = false;
 
+        private bool _pause = false;
         private bool _vip = false;
         private bool _isPayedPopupRoutineWorked = false;
         private int _indexPopupCarosel = 0;
@@ -76,6 +77,10 @@ namespace AdsAppView.Program
         }
 
         public void OnSubscribeDetected() => _vip = true;
+
+        public static void SetPause(bool pause) => Instance.Pause(pause);
+
+        private void Pause(bool pause) => _pause = pause;
 
         private void ShowInstancePopupPayedApp() => StartCoroutine(ShowingPopupPayedApp());
 
@@ -186,20 +191,28 @@ namespace AdsAppView.Program
 
         private IEnumerator ShowingOnTimer()
         {
-            var wait = new WaitForSecondsRealtime(5);
+            var wait2sec = new WaitForSecondsRealtime(2);
+            var wait5sec = new WaitForSecondsRealtime(5);
+            var waitOnPause = new WaitWhile(() => _pause);
 
             while (true)
             {
                 if (_vip == false)
                 {
                     if (_isPayedPopupRoutineWorked)
+                    {
                         yield return null;
+                    }
                     else
+                    {
+                        yield return waitOnPause;
+                        yield return wait2sec;
                         yield return ShowingPopupPayedApp();
+                    }
                 }
                 else
                 {
-                    yield return wait;
+                    yield return wait5sec;
                 }
             }
         }
