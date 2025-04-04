@@ -7,6 +7,7 @@ using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
 using System.IO;
+using System;
 
 namespace AdsAppView.Program
 {
@@ -285,26 +286,44 @@ namespace AdsAppView.Program
 
         private async Task FillPopupDataList()
         {
-            for (int i = 0; i < _freeAppConfigData.carousel_count; i++)
+            string[] apps = new string[12];
+
+            AppData appsDatas = new() { app_id = "array_aps", store_id = _appData.store_id, platform = _appData.platform };
+            Response appNamesResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, appsDatas);
+
+            Debug.Log("#PopupManager# Try load apps names");
+            if (appNamesResponse.statusCode == UnityWebRequest.Result.Success)
             {
-                PopupData newSprite = null;
+                AdsFilePathsData resp = JsonConvert.DeserializeObject<AdsFilePathsData>(appNamesResponse.body);
+                Debug.Log(resp.file_path);
+                apps = JsonConvert.DeserializeObject<string[]>(resp.file_path);
+                Debug.Log(apps.Length);
 
-                for (int s = 0; s < RetryCount; s++)
+                for (int i = 0; i < _freeAppConfigData.carousel_count; i++)
                 {
-                    newSprite = await GetPopupData(index: i);
+                    PopupData newSprite = null;
 
-                    if (newSprite != null)
-                        break;
+                    for (int s = 0; s < RetryCount; s++)
+                    {
+                        newSprite = await GetPopupData(index: i, apps[i]);
 
-                    await Task.Delay(RetryDelayMlsec);
+                        if (newSprite != null)
+                            break;
+
+                        await Task.Delay(RetryDelayMlsec);
+                    }
+
+                    newSprite ??= _popupData;
+                    _popupDataList.Add(newSprite);
                 }
-
-                newSprite ??= _popupData;
-                _popupDataList.Add(newSprite);
+            }
+            else
+            {
+                Debug.LogError($"#PopupManager[FillPopupDataList]# Try load apps names fail: {appNamesResponse.statusCode}, {appNamesResponse.reasonPhrase}");
             }
         }
 
-        private async Task<PopupData> GetPopupData(int index = -1)
+        private async Task<PopupData> GetPopupData(int index = -1, string apps = null)
         {
             AppData newData = new() { app_id = _appData.app_id, store_id = _appData.store_id, platform = _appData.platform };
             Response sourceLinkResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, SourceLinkRCName, newData);
@@ -314,7 +333,7 @@ namespace AdsAppView.Program
                 if (string.IsNullOrEmpty(sourceLinkResponse.body))
                     Debug.LogError("#PopupManager# Source link from data base is empty");
 
-                string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
+                string appId = index == -1 ? _freeAppConfigData.ads_app_id : apps;
                 newData.app_id = appId;
                 Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
 
