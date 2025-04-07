@@ -7,10 +7,6 @@ using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
 using System.IO;
-using System;
-using System.Security.Cryptography;
-using Random = UnityEngine.Random;
-using System.Linq;
 
 namespace AdsAppView.Program
 {
@@ -40,7 +36,7 @@ namespace AdsAppView.Program
         private PopupPayedConfigsData _payedConfigData;
         private AdsFilePathsData _adsFilePathsData;
 
-        private List<PopupData> _popupDataList = new();
+        private readonly List<PopupData> _popupDataList = new();
         private PopupData _popupData;
 
         private float _firstTimerSec = 60f;
@@ -117,7 +113,7 @@ namespace AdsAppView.Program
                             Debug.LogError("#PopupManager# Fail get popup datas");
 
                         if (_freeAppConfigData.carousel)
-                            await FillPopupDataList(_freeAppConfigData.carousel_count);
+                            await FillPopupDataList();
                     }
                     else
                     {
@@ -179,7 +175,7 @@ namespace AdsAppView.Program
                         }
 
                         if (_payedConfigData.carousel)
-                            await FillPopupDataList(_payedConfigData.carousel_count);
+                            await FillPopupDataList();
                     }
                     else
                     {
@@ -229,18 +225,12 @@ namespace AdsAppView.Program
             if (_payedConfigData.carousel)
             {
                 _isPayedPopupRoutineWorked = true;
-
-                Debug.Log("Current app: " + _popupDataList[_indexPopupCarosel].name);
-
                 yield return ShowingPopup(_regularTimerSec, _popupDataList[_indexPopupCarosel]);
 
                 _indexPopupCarosel++;
 
                 if (_indexPopupCarosel >= _popupDataList.Count)
-                {
                     _indexPopupCarosel = 0;
-                    _popupDataList = Shuffle(_popupDataList);
-                }
             }
             else
             {
@@ -281,10 +271,7 @@ namespace AdsAppView.Program
                     index++;
 
                     if (index >= _popupDataList.Count)
-                    {
                         index = 0;
-                        _popupDataList = Shuffle(_popupDataList);
-                    }
                 }
             }
             else
@@ -296,47 +283,28 @@ namespace AdsAppView.Program
             }
         }
 
-        private async Task FillPopupDataList(int carouselCount)
+        private async Task FillPopupDataList()
         {
-            string[] apps = new string[12];
-
-            AppData appsDatas = new() { app_id = "array_aps", store_id = _appData.store_id, platform = _appData.platform };
-            Response appNamesResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, appsDatas);
-
-            Debug.Log("#PopupManager# Try load apps names");
-            if (appNamesResponse.statusCode == UnityWebRequest.Result.Success)
+            for (int i = 0; i < _freeAppConfigData.carousel_count; i++)
             {
-                AdsFilePathsData resp = JsonConvert.DeserializeObject<AdsFilePathsData>(appNamesResponse.body);
-                Debug.Log(resp.file_path);
-                apps = JsonConvert.DeserializeObject<string[]>(resp.file_path);
-                Debug.Log(apps.Length);
+                PopupData newSprite = null;
 
-                for (int i = 0; i < carouselCount; i++)
+                for (int s = 0; s < RetryCount; s++)
                 {
-                    PopupData popupData = null;
+                    newSprite = await GetPopupData(index: i);
 
-                    for (int s = 0; s < RetryCount; s++)
-                    {
-                        popupData = await GetPopupData(index: i, apps[i]);
+                    if (newSprite != null)
+                        break;
 
-                        if (popupData != null)
-                            break;
-
-                        await Task.Delay(RetryDelayMlsec);
-                    }
-
-                    popupData ??= _popupData;
-                    int randomIndex = Random.Range(0, _popupDataList.Count);
-                    _popupDataList.Insert(randomIndex, popupData);
+                    await Task.Delay(RetryDelayMlsec);
                 }
-            }
-            else
-            {
-                Debug.LogError($"#PopupManager[FillPopupDataList]# Try load apps names fail: {appNamesResponse.statusCode}, {appNamesResponse.reasonPhrase}");
+
+                newSprite ??= _popupData;
+                _popupDataList.Add(newSprite);
             }
         }
 
-        private async Task<PopupData> GetPopupData(int index = -1, string apps = null)
+        private async Task<PopupData> GetPopupData(int index = -1)
         {
             AppData newData = new() { app_id = _appData.app_id, store_id = _appData.store_id, platform = _appData.platform };
             Response sourceLinkResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, SourceLinkRCName, newData);
@@ -346,7 +314,7 @@ namespace AdsAppView.Program
                 if (string.IsNullOrEmpty(sourceLinkResponse.body))
                     Debug.LogError("#PopupManager# Source link from data base is empty");
 
-                string appId = index == -1 ? _freeAppConfigData.ads_app_id : apps;
+                string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
                 newData.app_id = appId;
                 Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
 
@@ -473,19 +441,5 @@ namespace AdsAppView.Program
         [ContextMenu("Show popup")]
         private void Show() => StartCoroutine(ShowingPopupPayedApp());
 #endif
-
-        private List<T> Shuffle<T>(List<T> targetList)
-        {
-            List<T> resultList = new();
-            int randomIndex;
-
-            foreach (T item in targetList)
-            {
-                randomIndex = UnityEngine.Random.Range(0, resultList.Count);
-                resultList.Insert(randomIndex, item);
-            }
-
-            return resultList;
-        }
     }
 }
