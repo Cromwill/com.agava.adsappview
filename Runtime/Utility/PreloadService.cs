@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using AdsAppView.DTO;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using static AdsAppView.Program.Boot;
 
 namespace AdsAppView.Utility
 {
@@ -27,6 +28,7 @@ namespace AdsAppView.Utility
         private const string Platform = "iOS";
 #endif
 
+        private readonly Store _storeName;
         private AdsAppAPI _api;
         private AppData _appData;
         private int _bundlIdVersion;
@@ -34,13 +36,14 @@ namespace AdsAppView.Utility
         private bool _freeApp = true;
         private bool _isVip = true;
 
-        public PreloadService(AdsAppAPI api, int bundlIdVersion, bool freeApp, bool vip, AppData appData)
+        public PreloadService(AdsAppAPI api, int bundlIdVersion, bool freeApp, bool vip, AppData appData, Store storeName)
         {
             _api = api;
             _isVip = vip;
             _appData = appData;
             _freeApp = freeApp;
             _bundlIdVersion = bundlIdVersion;
+            _storeName = storeName;
         }
 
         public bool IsPluginAvailable { get; private set; } = false;
@@ -121,7 +124,7 @@ namespace AdsAppView.Utility
 
         private async Task<bool> InitFreeApp()
         {
-            string remoteName = $"{Application.identifier}/{Platform}";
+            string remoteName = $"{Application.identifier}/{Platform}/{_storeName}";
             Response response = await _api.GetRemoteSettings(remoteName);
 
             if (response.statusCode == UnityWebRequest.Result.Success)

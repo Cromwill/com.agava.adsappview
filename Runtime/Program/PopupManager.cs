@@ -7,6 +7,10 @@ using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
 using System.IO;
+using System;
+using System.Security.Cryptography;
+using Random = UnityEngine.Random;
+using System.Linq;
 
 namespace AdsAppView.Program
 {
@@ -36,7 +40,7 @@ namespace AdsAppView.Program
         private PopupPayedConfigsData _payedConfigData;
         private AdsFilePathsData _adsFilePathsData;
 
-        private readonly List<PopupData> _popupDataList = new();
+        private List<PopupData> _popupDataList = new();
         private PopupData _popupData;
 
         private float _firstTimerSec = 60f;
@@ -73,7 +77,7 @@ namespace AdsAppView.Program
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
             Task task = StartView(freeApp);
-            yield return new WaitUntil(() => task.IsCompleted);
+            //yield return new WaitUntil(() => task.IsCompleted);
         }
 
         public void OnSubscribeDetected() => _vip = true;
@@ -113,7 +117,7 @@ namespace AdsAppView.Program
                             Debug.LogError("#PopupManager# Fail get popup datas");
 
                         if (_freeAppConfigData.carousel)
-                            await FillPopupDataList();
+                            await FillPopupDataList(_freeAppConfigData.carousel_count);
                     }
                     else
                     {
@@ -175,7 +179,7 @@ namespace AdsAppView.Program
                         }
 
                         if (_payedConfigData.carousel)
-                            await FillPopupDataList();
+                            await FillPopupDataList(_payedConfigData.carousel_count);
                     }
                     else
                     {
@@ -225,12 +229,18 @@ namespace AdsAppView.Program
             if (_payedConfigData.carousel)
             {
                 _isPayedPopupRoutineWorked = true;
+
+                Debug.Log("Current app: " + _popupDataList[_indexPopupCarosel].name);
+
                 yield return ShowingPopup(_regularTimerSec, _popupDataList[_indexPopupCarosel]);
 
                 _indexPopupCarosel++;
 
                 if (_indexPopupCarosel >= _popupDataList.Count)
+                {
                     _indexPopupCarosel = 0;
+                    _popupDataList = Shuffle(_popupDataList);
+                }
             }
             else
             {
@@ -271,7 +281,10 @@ namespace AdsAppView.Program
                     index++;
 
                     if (index >= _popupDataList.Count)
+                    {
                         index = 0;
+                        _popupDataList = Shuffle(_popupDataList);
+                    }
                 }
             }
             else
@@ -283,28 +296,47 @@ namespace AdsAppView.Program
             }
         }
 
-        private async Task FillPopupDataList()
+        private async Task FillPopupDataList(int carouselCount)
         {
-            for (int i = 0; i < _freeAppConfigData.carousel_count; i++)
+            string[] apps = new string[12];
+
+            AppData appsDatas = new() { app_id = "array_aps", store_id = _appData.store_id, platform = _appData.platform };
+            Response appNamesResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, appsDatas);
+
+            Debug.Log("#PopupManager# Try load apps names");
+            if (appNamesResponse.statusCode == UnityWebRequest.Result.Success)
             {
-                PopupData newSprite = null;
+                AdsFilePathsData resp = JsonConvert.DeserializeObject<AdsFilePathsData>(appNamesResponse.body);
+                Debug.Log(resp.file_path);
+                apps = JsonConvert.DeserializeObject<string[]>(resp.file_path);
+                Debug.Log(apps.Length);
 
-                for (int s = 0; s < RetryCount; s++)
+                for (int i = 0; i < carouselCount; i++)
                 {
-                    newSprite = await GetPopupData(index: i);
+                    PopupData popupData = null;
 
-                    if (newSprite != null)
-                        break;
+                    for (int s = 0; s < RetryCount; s++)
+                    {
+                        popupData = await GetPopupData(index: i, apps[i]);
 
-                    await Task.Delay(RetryDelayMlsec);
+                        if (popupData != null)
+                            break;
+
+                        await Task.Delay(RetryDelayMlsec);
+                    }
+
+                    popupData ??= _popupData;
+                    int randomIndex = Random.Range(0, _popupDataList.Count);
+                    _popupDataList.Insert(randomIndex, popupData);
                 }
-
-                newSprite ??= _popupData;
-                _popupDataList.Add(newSprite);
+            }
+            else
+            {
+                Debug.LogError($"#PopupManager[FillPopupDataList]# Try load apps names fail: {appNamesResponse.statusCode}, {appNamesResponse.reasonPhrase}");
             }
         }
 
-        private async Task<PopupData> GetPopupData(int index = -1)
+        private async Task<PopupData> GetPopupData(int index = -1, string apps = null)
         {
             AppData newData = new() { app_id = _appData.app_id, store_id = _appData.store_id, platform = _appData.platform };
             Response sourceLinkResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, SourceLinkRCName, newData);
@@ -314,7 +346,7 @@ namespace AdsAppView.Program
                 if (string.IsNullOrEmpty(sourceLinkResponse.body))
                     Debug.LogError("#PopupManager# Source link from data base is empty");
 
-                string appId = index == -1 ? _freeAppConfigData.ads_app_id : CarouselPicture + index;
+                string appId = index == -1 ? _freeAppConfigData.ads_app_id : apps;
                 newData.app_id = appId;
                 Response filePathResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, DirectoryPathRCName, newData);
 
@@ -340,23 +372,26 @@ namespace AdsAppView.Program
                         string popupCacheFilePath = FileUtils.ConstructCacheFilePath(_adsFilePathsData.file_path);
                         PopupData popupData = null;
 
-                        if (TryLoadBytes(creds, _adsFilePathsData.file_path, popupCacheFilePath, out byte[] body))
+                        byte[] bytes = await TryLoadBytes(creds, _adsFilePathsData.file_path, popupCacheFilePath);
+
+                        if (bytes != null)
                         {
                             string sourceLink = JsonConvert.DeserializeObject<string>(sourceLinkResponse.body);
                             string link = _adsFilePathsData.app_link + sourceLink;
                             Debug.Log($"#PopupManager# Source link created: {link}");
-                            popupData = new PopupData() { body = body, link = link, name = _adsFilePathsData.ads_app_id, path = popupCacheFilePath };
+                            popupData = new PopupData() { body = bytes, link = link, name = _adsFilePathsData.ads_app_id, path = popupCacheFilePath };
                             string directory = Path.GetDirectoryName(_adsFilePathsData.file_path);
                             string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
 
-                            if (TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName), out Sprite playButtonSprite))
-                                popupData.play_button = playButtonSprite;
+                            Sprite buttonSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName));
 
-                            if (_viewPresenter.Background)
-                            {
-                                if (TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName), out Sprite backgroundSprite))
-                                    popupData.background = backgroundSprite;
-                            }
+                            if(buttonSprite != null)
+                                popupData.play_button = buttonSprite;
+
+                            Sprite backgroundSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName));
+
+                            if (backgroundSprite != null)
+                                popupData.background = backgroundSprite;
                         }
 
                         return popupData;
@@ -380,18 +415,18 @@ namespace AdsAppView.Program
             }
         }
 
-        private bool TryLoadBytes(FtpCreds creds, string serverFilePath, string cacheFilePath, out byte[] bytes)
+        private async Task<byte[]> TryLoadBytes(FtpCreds creds, string serverFilePath, string cacheFilePath)
         {
-            bytes = null;
+            byte[] bytes = null;
 
             if ((_caching && FileUtils.TryLoadFile(cacheFilePath, out bytes)) == false)
             {
-                Response textureResponse = AdsAppAPI.Instance.GetBytesData(creds.host, serverFilePath, creds.login, creds.password);
+                Response textureResponse = await AdsAppAPI.Instance.GetBytesData(creds.host, serverFilePath, creds.login, creds.password);
 
                 if (textureResponse.statusCode == UnityWebRequest.Result.Success)
                 {
                     bytes = textureResponse.bytes;
-                    FileUtils.TrySaveFile(cacheFilePath, bytes);
+                    await FileUtils.TrySaveFile(cacheFilePath, bytes);
                 }
                 else
                 {
@@ -399,18 +434,20 @@ namespace AdsAppView.Program
                 }
             }
 
-            return bytes != null;
+            return bytes;
         }
 
-        private bool TryLoadSprite(FtpCreds creds, string serverFilePath, out Sprite sprite)
+        private async Task<Sprite> TryLoadSprite(FtpCreds creds, string serverFilePath)
         {
-            sprite = null;
+            Sprite sprite = null;
             string cacheFilePath = FileUtils.ConstructCacheFilePath(serverFilePath);
 
-            if (TryLoadBytes(creds, serverFilePath, cacheFilePath, out byte[] bytes))
+            byte[] bytes = await TryLoadBytes(creds, serverFilePath, cacheFilePath);
+
+            if (bytes != null)
                 sprite = FileUtils.LoadSprite(bytes);
 
-            return sprite != null;
+            return sprite;
         }
 
         private async Task SetCachingConfig()
@@ -441,5 +478,19 @@ namespace AdsAppView.Program
         [ContextMenu("Show popup")]
         private void Show() => StartCoroutine(ShowingPopupPayedApp());
 #endif
+
+        private List<T> Shuffle<T>(List<T> targetList)
+        {
+            List<T> resultList = new();
+            int randomIndex;
+
+            foreach (T item in targetList)
+            {
+                randomIndex = UnityEngine.Random.Range(0, resultList.Count);
+                resultList.Insert(randomIndex, item);
+            }
+
+            return resultList;
+        }
     }
 }

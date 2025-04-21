@@ -1,4 +1,7 @@
+using System;
+using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace AdsAppView.Utility
@@ -14,11 +17,9 @@ namespace AdsAppView.Utility
         public static bool TryLoadFile(string filePath, out byte[] bytes)
         {
             bytes = null;
-
             if (File.Exists(filePath))
             {
                 bytes = File.ReadAllBytes(filePath);
-
 
 #if UNITY_EDITOR
                 Debug.Log($"#FileUtils# Cache texture loaded from path: {filePath}");
@@ -34,11 +35,11 @@ namespace AdsAppView.Utility
             return bytes != null;
         }
 
-        public static void TrySaveFile(string filePath, byte[] bytes)
+        public static async Task TrySaveFile(string filePath, byte[] bytes)
         {
             try
             {
-                File.WriteAllBytes(filePath, bytes);
+                await File.WriteAllBytesAsync(filePath, bytes);
 #if UNITY_EDITOR
                 Debug.Log($"#FileUtils# File saved to path: {filePath}");
 #endif

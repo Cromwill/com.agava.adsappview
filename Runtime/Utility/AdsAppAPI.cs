@@ -100,7 +100,7 @@ namespace AdsAppView.Utility
         /// </summary>
         /// <param name="host">Need data ftp server name/login/pass</param>
         /// <returns></returns>
-        public Response GetBytesData(string host, string filePath, string login, string password)
+        public async Task<Response> GetBytesData(string host, string filePath, string login, string password)
         {
             EnsureInitialize();
             string path = host + "/" + filePath;
@@ -112,7 +112,7 @@ namespace AdsAppView.Utility
                 password = password,
             };
 
-            return _webClient.GetBytesData(request);
+            return await _webClient.GetBytesData(request);
         }
 
         private void EnsureInitialize()

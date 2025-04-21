@@ -105,14 +105,14 @@ namespace AdsAppView.Utility
             }
         }
 
-        public Response GetBytesData(Request request)
+        public async Task<Response> GetBytesData(Request request)
         {
             string address = request.api_name;
             Debug.Log("#WebClient# Web address: " + address);
 
-            byte[] downloaded = DownloadWithFTP(address, savePath: string.Empty, request.login, request.password);
+            byte[] downloaded = await DownloadWithFTP(address, savePath: string.Empty, request.login, request.password);
 
-            byte[] DownloadWithFTP(string ftpUrl, string savePath = "", string userName = "", string password = "")
+            async Task<byte[]> DownloadWithFTP(string ftpUrl, string savePath = "", string userName = "", string password = "")
             {
                 if (Uri.TryCreate(ftpUrl, UriKind.Absolute, out Uri uri) == false)
                     throw new NullReferenceException("Cant create uri: " + ftpUrl);
@@ -130,33 +130,36 @@ namespace AdsAppView.Utility
 
                 if (!string.IsNullOrEmpty(savePath))
                 {
-                    DownloadAndSave(request.GetResponse(), savePath);
+                    await DownloadAndSave(request.GetResponse(), savePath);
                     return null;
                 }
                 else
                 {
-                    return DownloadAsbyteArray(request.GetResponse());
+                    return await DownloadAsbyteArray(request.GetResponse());
                 }
             }
 
-            byte[] DownloadAsbyteArray(WebResponse request)
+            async Task<byte[]> DownloadAsbyteArray(WebResponse request)
             {
                 using (Stream input = request.GetResponseStream())
                 {
                     byte[] buffer = new byte[16 * 1024];
-                    using (MemoryStream ms = new MemoryStream())
+
+                    await using (MemoryStream ms = new MemoryStream())
                     {
                         int read;
-                        while (input.CanRead && (read = input.Read(buffer, 0, buffer.Length)) > 0)
+
+                        while (input.CanRead && (read = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
                         {
                             ms.Write(buffer, 0, read);
                         }
+
                         return ms.ToArray();
                     }
                 }
             }
 
-            void DownloadAndSave(WebResponse request, string savePath)
+            async Task DownloadAndSave(WebResponse request, string savePath)
             {
                 Stream reader = request.GetResponseStream();
 
@@ -170,12 +173,12 @@ namespace AdsAppView.Utility
 
                 while (true)
                 {
-                    bytesRead = reader.Read(buffer, 0, buffer.Length);
+                    bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length);
 
                     if (bytesRead == 0)
                         break;
 
-                    fileStream.Write(buffer, 0, bytesRead);
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
                 }
 
                 fileStream.Close();
@@ -184,7 +187,6 @@ namespace AdsAppView.Utility
             UnityWebRequest.Result result = downloaded != null ? UnityWebRequest.Result.Success : UnityWebRequest.Result.DataProcessingError;
 
             return new Response(result, result.ToString(), "", false, downloaded);
-
         }
 
         private string GetHttpPath(string apiName, string apiData = null, bool api = true)

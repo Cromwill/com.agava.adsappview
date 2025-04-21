@@ -4,7 +4,6 @@ using UnityEngine;
 using AdsAppView.Utility;
 using AdsAppView.DTO;
 using Newtonsoft.Json;
-using System;
 
 namespace AdsAppView.Program
 {
@@ -25,7 +24,7 @@ namespace AdsAppView.Program
         [SerializeField] private ViewPresenterConfigs _viewPresenterConfigs;
         [Header("Web settings")]
         [Tooltip("Bund for plugin settings")]
-        [SerializeField] private BuildVersionHolder _buildVersionHolder;
+        [SerializeField] private int _bundlIdVersion = 1;
         [Tooltip("Store name")]
         [SerializeField] private Store _storeName;
         [Tooltip("Server name remote data")]
@@ -53,9 +52,6 @@ namespace AdsAppView.Program
 
         private IEnumerator Start()
         {
-            if (_buildVersionHolder == null)
-                throw new NullReferenceException("[Boot] Build version holder is null!!!");
-
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
@@ -70,7 +66,7 @@ namespace AdsAppView.Program
 
             _api = new(_serverPath, _appId);
             _appData = new() { app_id = _appId, store_id = _storeName.ToString(), platform = Platform };
-            _preloadService = new(_api, _buildVersionHolder.BundleId, _freeApp, vip, _appData);
+            _preloadService = new(_api, _bundlIdVersion, _freeApp, vip, _appData, _storeName);
             Debug.Log("#Boot# " + JsonConvert.SerializeObject(_appData));
 
             yield return _preloadService.Preparing();
@@ -119,7 +115,7 @@ namespace AdsAppView.Program
             yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip);
         }
 
-        private enum Store
+        public enum Store
         {
             AppStore,
             Google,
