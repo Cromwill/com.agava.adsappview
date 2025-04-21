@@ -7,6 +7,7 @@ namespace AdsAppView.Utility
     {
         [field: SerializeField] public string Version { get; private set; }
         [field: SerializeField] public int BundleId { get; private set; }
+        [field: SerializeField] public Store StoreName { get; private set; }
 
         public void ApplyToProjectSettings()
         {

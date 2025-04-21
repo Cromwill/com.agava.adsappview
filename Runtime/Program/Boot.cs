@@ -26,8 +26,6 @@ namespace AdsAppView.Program
         [Header("Web settings")]
         [Tooltip("Bund for plugin settings")]
         [SerializeField] private BuildVersionHolder _buildVersionHolder;
-        [Tooltip("Store name")]
-        [SerializeField] private Store _storeName;
         [Tooltip("Server name remote data")]
         [SerializeField] private string _serverPath;
         [Tooltip("Assets settings")]
@@ -69,8 +67,8 @@ namespace AdsAppView.Program
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
             _api = new(_serverPath, _appId);
-            _appData = new() { app_id = _appId, store_id = _storeName.ToString(), platform = Platform };
-            _preloadService = new(_api, _buildVersionHolder.BundleId, _freeApp, vip, _appData, _storeName);
+            _appData = new() { app_id = _appId, store_id = _buildVersionHolder.StoreName.ToString(), platform = Platform };
+            _preloadService = new(_api, _buildVersionHolder.BundleId, _freeApp, vip, _appData, _buildVersionHolder.StoreName);
             Debug.Log("#Boot# " + JsonConvert.SerializeObject(_appData));
 
             yield return _preloadService.Preparing();
@@ -119,13 +117,5 @@ namespace AdsAppView.Program
             yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip);
         }
 
-        public enum Store
-        {
-            AppStore,
-            Google,
-            Huawei,
-            RuStore,
-            test
-        }
     }
 }
