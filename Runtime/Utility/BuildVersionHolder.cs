@@ -1,8 +1,7 @@
 using UnityEditor;
 using UnityEngine;
-using AdsAppView.Utility;
 
-namespace AdsAppView.Program
+namespace AdsAppView.Utility
 {
     public class BuildVersionHolder : MonoBehaviour
     {

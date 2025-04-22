@@ -22,6 +22,7 @@ namespace AdsAppView.Utility
             AppMetrica.Activate(new AppMetricaConfig(key)
             {
                 FirstActivationAsUpdate = !IsFirstLaunch(),
+                LocationTracking = false,
             });
 
 #if UNITY_EDITOR || TEST
