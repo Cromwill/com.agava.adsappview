@@ -33,6 +33,9 @@ namespace AdsAppView.Program
         [SerializeField] private bool _useAssetBundles = true;
         [SerializeField] private AssetsBundlesLoader _assetsBundlesLoader;
         [SerializeField] private GameObject _defaultAsset;
+        [Tooltip("Content load settings")]
+        [SerializeField] private bool _asyncLoadContent = false;
+        [SerializeField] private LoadingBarPresenter _loadingBarPresenter;
 
 #if UNITY_WEBGL
         [Header("WEBGL")]
@@ -86,6 +89,8 @@ namespace AdsAppView.Program
 
         private IEnumerator Initialize(bool vip)
         {
+            _loadingBarPresenter.SetActive(true);
+
             AnalyticsService.SendStartApp(_appId);
             GameObject created = null;
             Debug.Log("#Boot# Popup plugin enabled");
@@ -114,8 +119,8 @@ namespace AdsAppView.Program
                 Debug.Log("#Boot# Default-PopupManager Instantiated");
             }
 
-            yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip);
+            yield return created.GetComponent<PopupManager>().Construct(_appData, _freeApp, vip, _asyncLoadContent, _loadingBarPresenter);
+            _loadingBarPresenter.SetActive(false);
         }
-
     }
 }
