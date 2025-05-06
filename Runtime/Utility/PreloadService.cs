@@ -70,6 +70,7 @@ namespace AdsAppView.Utility
 
         private async Task<bool> InitPayedApp()
         {
+            Debug.Log($"#PreloadService in AdsAppView# Used bundle id version = {_bundlIdVersion}, in init payed app method.");
             string apiName = PayedSettingsRCName;
 
             RequestPayedPopupData data = new() { app_id = _appData.app_id, platform = _appData.platform, store_id = _appData.store_id, vip = _isVip };
@@ -123,6 +124,7 @@ namespace AdsAppView.Utility
 
         private async Task<bool> InitFreeApp()
         {
+            Debug.Log($"#PreloadService in AdsAppView# Used bundle id version = {_bundlIdVersion}, in init free app method.");
             string remoteName = $"{Application.identifier}/{Platform}/{_storeName}";
             Response response = await _api.GetRemoteSettings(remoteName);
 

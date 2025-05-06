@@ -1,16 +1,14 @@
-﻿using System.Collections;
+﻿using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 using AdsAppView.DTO;
 using AdsAppView.Utility;
 using Newtonsoft.Json;
-using System.IO;
-using System;
-using System.Security.Cryptography;
 using Random = UnityEngine.Random;
-using System.Linq;
 
 namespace AdsAppView.Program
 {
@@ -42,6 +40,7 @@ namespace AdsAppView.Program
 
         private List<PopupData> _popupDataList = new();
         private PopupData _popupData;
+        private LoadingBarPresenter _loadingBarPresenter;
 
         private float _firstTimerSec = 60f;
         private float _regularTimerSec = 180f;
@@ -62,8 +61,9 @@ namespace AdsAppView.Program
                 Instance.ShowInstancePopupPayedApp();
         }
 
-        public IEnumerator Construct(AppData appData, bool freeApp, bool vip)
+        public IEnumerator Construct(AppData appData, bool freeApp, bool vip, bool asyncLoad, LoadingBarPresenter loadingBarPresenter)
         {
+            _loadingBarPresenter = loadingBarPresenter;
             Instance = this;
             _vip = vip;
             _viewPresenter = _viewPresenterFactory.InstantiateViewPresenter(ViewPresenterConfigs.ViewPresenterType);
@@ -77,7 +77,9 @@ namespace AdsAppView.Program
                 yield return new WaitWhile(() => Application.internetReachability == NetworkReachability.NotReachable);
 
             Task task = StartView(freeApp);
-            //yield return new WaitUntil(() => task.IsCompleted);
+
+            if (asyncLoad == false)
+                yield return new WaitUntil(() => task.IsCompleted);
         }
 
         public void OnSubscribeDetected() => _vip = true;
@@ -108,6 +110,13 @@ namespace AdsAppView.Program
                         _freeAppConfigData = data;
                         _firstTimerSec = data.first_timer;
                         _regularTimerSec = data.regular_timer;
+
+                        int contentTypesCount = 3;
+
+                        if (_payedConfigData.carousel == false)
+                            _loadingBarPresenter.SetMax(contentTypesCount);
+                        else
+                            _loadingBarPresenter.SetMax(_payedConfigData.carousel_count * contentTypesCount);
 
                         _popupData = await GetPopupData();
 
@@ -157,6 +166,13 @@ namespace AdsAppView.Program
                         _payedConfigData = data;
                         _firstTimerSec = data.first_timer;
                         _regularTimerSec = data.regular_timer;
+
+                        int contentTypesCount = 3;
+
+                        if (_payedConfigData.carousel == false)
+                            _loadingBarPresenter.SetMax(contentTypesCount);
+                        else
+                            _loadingBarPresenter.SetMax(_payedConfigData.carousel_count * contentTypesCount);
 
                         _popupData = await GetPopupData();
 
@@ -340,6 +356,7 @@ namespace AdsAppView.Program
         {
             AppData newData = new() { app_id = _appData.app_id, store_id = _appData.store_id, platform = _appData.platform };
             Response sourceLinkResponse = await AdsAppAPI.Instance.GetFilePath(ControllerName, SourceLinkRCName, newData);
+            _loadingBarPresenter.UpdateAdditiveProgress();
 
             if (sourceLinkResponse.statusCode == UnityWebRequest.Result.Success)
             {
@@ -383,11 +400,13 @@ namespace AdsAppView.Program
                             string directory = Path.GetDirectoryName(_adsFilePathsData.file_path);
                             string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
 
+                            _loadingBarPresenter.UpdateAdditiveProgress();
                             Sprite buttonSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName));
 
                             if(buttonSprite != null)
                                 popupData.play_button = buttonSprite;
 
+                            _loadingBarPresenter.UpdateAdditiveProgress();
                             Sprite backgroundSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName));
 
                             if (backgroundSprite != null)
