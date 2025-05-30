@@ -18,6 +18,7 @@ namespace AdsAppView.Program
             Sprite popupSprite = FileUtils.LoadSprite(popupData.body);
             _popupImage.sprite = popupSprite;
             _aspectRatioFitter.aspectRatio = (float)popupSprite.texture.width / popupSprite.texture.height;
+            LastPopupName = popupData.name;
 
             if (popupData.background != null)
                 background.sprite = popupData.background;

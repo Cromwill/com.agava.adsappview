@@ -22,6 +22,7 @@ public abstract class BaseViewPresenter : MonoBehaviour, IViewPresenter
     protected Image linkButtonImage;
     protected string link;
     protected string lastSpriteName;
+    protected string LastPopupName;
 
     public bool Enable { get; private set; } = false;
     public abstract bool Background { get; }
@@ -97,7 +98,7 @@ public abstract class BaseViewPresenter : MonoBehaviour, IViewPresenter
 
     private void OnCloseClicked()
     {
-        AnalyticsService.SendPopupClosed();
+        AnalyticsService.SendPopupClosed(LastPopupName);
         DisableCanvasGroup(_windowCanvasGrp);
     }
 

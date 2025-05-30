@@ -22,6 +22,7 @@ namespace AdsAppView.Program
             link = popupData.link;
             lastSpriteName = popupData.name;
             _player.url = popupData.path;
+            LastPopupName = popupData.name;
             EnableCanvasGroup();
         }
 
