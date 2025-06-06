@@ -113,10 +113,10 @@ namespace AdsAppView.Program
 
                         int contentTypesCount = 3;
 
-                        if (_payedConfigData.carousel == false)
+                        if (_freeAppConfigData.carousel == false)
                             _loadingBarPresenter.SetMax(contentTypesCount);
                         else
-                            _loadingBarPresenter.SetMax(_payedConfigData.carousel_count * contentTypesCount);
+                            _loadingBarPresenter.SetMax(_freeAppConfigData.carousel_count * contentTypesCount);
 
                         _popupData = await GetPopupData();
 

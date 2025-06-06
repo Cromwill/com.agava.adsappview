@@ -50,6 +50,8 @@ namespace AdsAppView.Program
         private AppData _appData;
         private PreloadService _preloadService;
 
+        public bool Constructed { get; private set; }
+
         public static Boot Instance { get; private set; }
 
         private IEnumerator Start()
@@ -85,6 +87,8 @@ namespace AdsAppView.Program
                 yield return Initialize(vip);
             else
                 Debug.Log("#Boot# Popup plugin disabled");
+
+            Constructed = true;
         }
 
         private IEnumerator Initialize(bool vip)
