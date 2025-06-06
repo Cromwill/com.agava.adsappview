@@ -25,6 +25,11 @@
             "description": "Contains art",
             "displayName": "Art",
             "path": "Samples~/Art"
+        },
+        {
+            "description": "Contains scenes",
+            "displayName": "Scenes",
+            "path": "Samples~/Scenes"
         }
     ],
     "type": "library",
