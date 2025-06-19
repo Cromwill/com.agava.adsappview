@@ -6,5 +6,6 @@ namespace AdsAppView.DTO
     public class AppMetricaInfo : ScriptableObject
     {
         [field: SerializeField] public string Key { get; private set; }
+        [field: SerializeField] public string Id { get; private set; }
     }
 }

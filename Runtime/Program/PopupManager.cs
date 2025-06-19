@@ -83,6 +83,7 @@ namespace AdsAppView.Program
         }
 
         public void OnSubscribeDetected() => _vip = true;
+        public void AccoundDeleted() => _vip = false;
 
         public static void SetPause(bool pause) => Instance.Pause(pause);
 
@@ -217,7 +218,7 @@ namespace AdsAppView.Program
 
             while (true)
             {
-                if (_vip == false)
+                if (_vip)
                 {
                     if (_isPayedPopupRoutineWorked)
                     {
