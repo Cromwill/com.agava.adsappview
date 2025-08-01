@@ -507,6 +507,10 @@ PrefabInstance:
       propertyPath: _buildVersionHolder
       value: 
       objectReference: {fileID: 71964297}
+    - target: {fileID: 5260555599139361273, guid: 4b8dd4b63bb66ac4fac6ef3d72ea96a3, type: 3}
+      propertyPath: _advertisementController
+      value: 
+      objectReference: {fileID: 1666422510}
     - target: {fileID: 7275052375419752052, guid: 4b8dd4b63bb66ac4fac6ef3d72ea96a3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

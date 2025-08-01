@@ -31,13 +31,15 @@ namespace AdsAppView.Program
         [SerializeField] private string _serverPath;
         [Tooltip("Assets settings")]
         [SerializeField] private bool _freeApp = true;
-        [SerializeField] private AdvertisementBoot _advertisementBoot;
         [SerializeField] private bool _useAssetBundles = true;
         [SerializeField] private AssetsBundlesLoader _assetsBundlesLoader;
         [SerializeField] private GameObject _defaultAsset;
         [Tooltip("Content load settings")]
         [SerializeField] private bool _asyncLoadContent = false;
         [SerializeField] private LoadingBarPresenter _loadingBarPresenter;
+        [Header("Advertisement")]
+        [SerializeField] private AdvertisementBoot _advertisementBoot;
+        [SerializeField] private AdvertisementController _advertisementController;
 
 #if UNITY_WEBGL
         [Header("WEBGL")]
@@ -99,9 +101,12 @@ namespace AdsAppView.Program
             {
                 if(_advertisementBoot.IsPluginAvailable)
                 {
+                    if (_advertisementController.WaitConcernPolicy && _advertisementController.PolicyAccepted == false)
+                        yield return new WaitUntil(() => _advertisementController.AgreementClosed);
+
                     AdvertisementController.Instance.StartInterstitialTimer();
                 }
-                else
+                else if (_preloadService.IsPluginAvailable)
                 {
                     yield return Initialize(vip);
                     AdvertisementController.Instance?.ChangeSubscribeStatus(vip: true);
