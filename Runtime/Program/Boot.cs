@@ -99,7 +99,7 @@ namespace AdsAppView.Program
             }
             else
             {
-                if(_advertisementBoot.IsPluginAvailable)
+                if (_advertisementBoot.IsPluginAvailable)
                 {
                     if (_advertisementController.WaitConcernPolicy && _advertisementController.PolicyAccepted == false)
                         yield return new WaitUntil(() => _advertisementController.AgreementClosed);
