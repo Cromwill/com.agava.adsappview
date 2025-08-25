@@ -39,7 +39,6 @@ namespace AdsAppView.Program
         [SerializeField] private LoadingBarPresenter _loadingBarPresenter;
         [Header("Advertisement")]
         [SerializeField] private AdvertisementBoot _advertisementBoot;
-        [SerializeField] private AdvertisementController _advertisementController;
 
 #if UNITY_WEBGL
         [Header("WEBGL")]
@@ -101,10 +100,10 @@ namespace AdsAppView.Program
             {
                 if (_advertisementBoot.IsPluginAvailable)
                 {
-                    if (_advertisementController.WaitConcernPolicy && _advertisementController.PolicyAccepted == false)
-                        yield return new WaitUntil(() => _advertisementController.AgreementClosed);
+                    if (_advertisementBoot.AdvertisementController.WaitConcernPolicy && _advertisementBoot.AdvertisementController.PolicyAccepted == false)
+                        yield return new WaitUntil(() => _advertisementBoot.AdvertisementController.AgreementClosed);
 
-                    AdvertisementController.Instance.StartInterstitialTimer();
+                    AdvertisementController.Instance?.StartInterstitialTimer();
                 }
                 else if (_preloadService.IsPluginAvailable)
                 {
