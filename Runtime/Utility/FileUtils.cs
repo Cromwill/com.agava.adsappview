@@ -56,7 +56,7 @@ namespace AdsAppView.Utility
 
             if (TryLoadFile(filePath, out byte[] bytes))
             {
-                texture = new Texture2D(2, 2);
+                texture = new Texture2D(1, 1);
                 texture.LoadImage(bytes);
             }
 
@@ -70,10 +70,16 @@ namespace AdsAppView.Utility
 
         public static Sprite LoadSprite(byte[] bytes)
         {
-            Texture2D texture = new Texture2D(2, 2);
+            Debug.Log("PROVERKA: create sprite!");
+            Texture2D texture = new (1, 1, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+
             texture.LoadImage(bytes);
 
-            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect);
         }
     }
 }
