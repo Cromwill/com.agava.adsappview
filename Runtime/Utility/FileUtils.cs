@@ -70,7 +70,6 @@ namespace AdsAppView.Utility
 
         public static Sprite LoadSprite(byte[] bytes)
         {
-            Debug.Log("PROVERKA: create sprite!");
             Texture2D texture = new (1, 1, TextureFormat.RGBA32, false)
             {
                 wrapMode = TextureWrapMode.Clamp,
