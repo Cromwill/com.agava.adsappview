@@ -70,15 +70,28 @@ namespace AdsAppView.Utility
 
         public static Sprite LoadSprite(byte[] bytes)
         {
-            Texture2D texture = new (1, 1, TextureFormat.RGBA32, false)
+            Texture2D texture = new (1, 1, GetCompressedFormatForPlatform(), false)
             {
                 wrapMode = TextureWrapMode.Clamp,
                 filterMode = FilterMode.Bilinear
             };
 
             texture.LoadImage(bytes);
+            texture.Compress(true);
+            texture.Apply();
 
             return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect);
+        }
+
+        public static TextureFormat GetCompressedFormatForPlatform()
+        {
+#if UNITY_EDITOR
+            return TextureFormat.RGBA32;
+#elif UNITY_ANDROID
+            return TextureFormat.ASTC_6x6;
+#elif UNITY_IOS
+            return TextureFormat.ASTC_6x6;
+#endif
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -50,6 +51,7 @@ namespace AdsAppView.Program
         private bool _vip = false;
         private bool _isPayedPopupRoutineWorked = false;
         private int _indexPopupCarosel = 0;
+        private List<DownloadedSprites> _downloadedSprites = new();
 
         public bool CanShowPopup => _isPayedPopupRoutineWorked == false;
         public float RegularTimeSec => _regularTimerSec;
@@ -402,16 +404,44 @@ namespace AdsAppView.Program
                             string fileName = Path.GetFileNameWithoutExtension(_adsFilePathsData.file_path);
 
                             _loadingBarPresenter.UpdateAdditiveProgress();
-                            Sprite buttonSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName));
 
-                            if(buttonSprite != null)
-                                popupData.play_button = buttonSprite;
+                            if (_downloadedSprites.Any(p => p.Path == FullFilePath(fileName, directory, PlayButtonFileName)) == false)
+                            {
+                                Sprite buttonSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName));
+                                _downloadedSprites.Add(new DownloadedSprites() { Sprite = buttonSprite, Path = FullFilePath(fileName, directory, PlayButtonFileName)});
+
+                                if (buttonSprite != null)
+                                    popupData.play_button = buttonSprite;
+                            }
+                            else
+                            {
+                                popupData.play_button = _downloadedSprites.FirstOrDefault(p => p.Path == FullFilePath(fileName, directory, PlayButtonFileName)).Sprite;
+                            }
+
+                            /*Sprite buttonSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, PlayButtonFileName));
+
+                            if (buttonSprite != null)
+                                popupData.play_button = buttonSprite;*/
 
                             _loadingBarPresenter.UpdateAdditiveProgress();
-                            Sprite backgroundSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName));
+
+                            if (_downloadedSprites.Any(p => p.Path == FullFilePath(fileName, directory, BackgroundFileName)) == false)
+                            {
+                                Sprite backgroundSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName));
+                                _downloadedSprites.Add(new DownloadedSprites() { Sprite = backgroundSprite, Path = FullFilePath(fileName, directory, BackgroundFileName) });
+
+                                if (backgroundSprite != null)
+                                    popupData.background = backgroundSprite;
+                            }
+                            else
+                            {
+                                popupData.background = _downloadedSprites.FirstOrDefault(p => p.Path == FullFilePath(fileName, directory, BackgroundFileName)).Sprite;
+                            }
+
+                            /*Sprite backgroundSprite = await TryLoadSprite(creds, FullFilePath(fileName, directory, BackgroundFileName));
 
                             if (backgroundSprite != null)
-                                popupData.background = backgroundSprite;
+                                popupData.background = backgroundSprite;*/
                         }
 
                         return popupData;
@@ -512,5 +542,11 @@ namespace AdsAppView.Program
 
             return resultList;
         }
+    }
+
+    public class DownloadedSprites
+    {
+        public Sprite Sprite;
+        public string Path;
     }
 }
